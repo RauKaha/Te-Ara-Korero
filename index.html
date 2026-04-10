@@ -50,7 +50,10 @@ body {
   font-family: 'Poppins', 'Segoe UI', sans-serif;
   font-feature-settings: "kern" 1;
   -webkit-font-smoothing: antialiased;
-  background: var(--white);
+  background-color: var(--white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cg opacity='0.1'%3E%3Cline x1='0' y1='98' x2='200' y2='98' stroke='%236D4C41' stroke-width='0.8'/%3E%3Cline x1='0' y1='102' x2='200' y2='102' stroke='%236D4C41' stroke-width='0.8'/%3E%3Cline x1='0' y1='0' x2='200' y2='200' stroke='%232E7D32' stroke-width='1.2'/%3E%3Cline x1='-100' y1='0' x2='100' y2='200' stroke='%232E7D32' stroke-width='0.7'/%3E%3Cline x1='100' y1='0' x2='300' y2='200' stroke='%232E7D32' stroke-width='0.7'/%3E%3Cpolygon points='0,0 40,0 0,40' fill='%2333691E'/%3E%3Cpolygon points='200,200 160,200 200,160' fill='%2333691E'/%3E%3Cpath d='M100,128 L100,115 C100,103 90,96 85,101 C79,108 85,120 98,120 C108,120 113,110 108,103' stroke='%231B5E20' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M50,60 L50,51 C50,43 44,39 41,43 C37,48 41,56 49,56 C55,56 58,49 55,44' stroke='%232E7D32' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M150,160 L150,151 C150,143 144,139 141,143 C137,148 141,156 149,156 C155,156 158,149 155,144' stroke='%232E7D32' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
   color: var(--grey-900);
   font-size: 15px;
   min-height: 100vh;
@@ -608,6 +611,31 @@ body {
   0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
   80%  { opacity: 1; }
   100% { transform: translateY(110vh) rotate(720deg) scale(0.6); opacity: 0; }
+}
+
+/* ── DARK MODE ───────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --white:    #121A12;
+    --grey-100: #1A231A;
+    --grey-200: #243024;
+    --grey-300: #2E3D2E;
+    --grey-500: #7A8A7A;
+    --grey-700: #B0C4B0;
+    --grey-900: #E8F0E8;
+    --green-pale: #1A2E1A;
+    --green-light: #1E3A1E;
+    --gold-light: #2A2000;
+  }
+  body {
+    background-color: #0E160E;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cg opacity='0.12'%3E%3Cline x1='0' y1='98' x2='200' y2='98' stroke='%23A1887F' stroke-width='0.8'/%3E%3Cline x1='0' y1='102' x2='200' y2='102' stroke='%23A1887F' stroke-width='0.8'/%3E%3Cline x1='0' y1='0' x2='200' y2='200' stroke='%2381C784' stroke-width='1.2'/%3E%3Cline x1='-100' y1='0' x2='100' y2='200' stroke='%2381C784' stroke-width='0.7'/%3E%3Cline x1='100' y1='0' x2='300' y2='200' stroke='%2381C784' stroke-width='0.7'/%3E%3Cpolygon points='0,0 40,0 0,40' fill='%2366BB6A'/%3E%3Cpolygon points='200,200 160,200 200,160' fill='%2366BB6A'/%3E%3Cpath d='M100,128 L100,115 C100,103 90,96 85,101 C79,108 85,120 98,120 C108,120 113,110 108,103' stroke='%23A5D6A7' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M50,60 L50,51 C50,43 44,39 41,43 C37,48 41,56 49,56 C55,56 58,49 55,44' stroke='%2381C784' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M150,160 L150,151 C150,143 144,139 141,143 C137,148 141,156 149,156 C155,156 158,149 155,144' stroke='%2381C784' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .tab-bar { background: #1A231A; border-color: #2E3D2E; }
+  .tab-btn.active { background: var(--green-fern); }
+  .level-intro, .game-area, .topic-card { background: #1A231A; }
+  .word-bank, .answer-area { background: #121A12; border-color: #2E3D2E; }
+  .tile { background: var(--grey-100); color: var(--grey-900); }
 }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
