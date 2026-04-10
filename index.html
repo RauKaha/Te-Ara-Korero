@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="mi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Te Ara Kōrero — Māori Sentence Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────────── */
+:root {
+  --green-deep:    #1B5E20;
+  --green-mid:     #2E7D32;
+  --green-fern:    #4CAF50;
+  --green-fern-dk: #388E3C;
+  --green-light:   #C8E6C9;
+  --green-pale:    #F1F8E9;
+  --gold:          #F9A825;
+  --gold-light:    #FFF8E1;
+  --white:         #FFFFFF;
+  --grey-100:      #F5F5F5;
+  --grey-200:      #EEEEEE;
+  --grey-300:      #E0E0E0;
+  --grey-500:      #9E9E9E;
+  --grey-700:      #616161;
+  --grey-900:      #212121;
+  --radius:        24px;
+  --radius-sm:     14px;
+  --radius-xs:     10px;
+
+  /* Category tile colours — vivid & high contrast */
+  --cat-tense-bg: #E8F5E9; --cat-tense-border: #388E3C; --cat-tense-text: #1B5E20;
+  --cat-verb-bg:  #E3F2FD; --cat-verb-border:  #1976D2; --cat-verb-text:  #0D47A1;
+  --cat-det-bg:   #FBE9E7; --cat-det-border:   #E64A19; --cat-det-text:   #BF360C;
+  --cat-noun-bg:  #FFFDE7; --cat-noun-border:  #F9A825; --cat-noun-text:  #E65100;
+  --cat-adj-bg:   #FCE4EC; --cat-adj-border:   #C2185B; --cat-adj-text:   #880E4F;
+  --cat-loc-bg:   #EDE7F6; --cat-loc-border:   #7B1FA2; --cat-loc-text:   #4A148C;
+  --cat-conn-bg:  #F3E5F5; --cat-conn-border:  #8E24AA; --cat-conn-text:  #6A1B9A;
+  --cat-mod-bg:   #FFF3E0; --cat-mod-border:   #E65100; --cat-mod-text:   #BF360C;
+  --cat-int-bg:   #ECEFF1; --cat-int-border:   #455A64; --cat-int-text:   #263238;
+  --cat-subj-bg:  #FFEBEE; --cat-subj-border:  #C62828; --cat-subj-text:  #B71C1C;
+}
+
+/* ── RESET ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── BASE ──────────────────────────────────────────────────── */
+body {
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  font-feature-settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  background: var(--white);
+  color: var(--grey-900);
+  font-size: 15px;
+  min-height: 100vh;
+}
+
+/* ── SITE HEADER ───────────────────────────────────────────── */
+.site-header {
+  background: var(--green-deep);
+  padding: 14px 20px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  /* Kōwhaiwhai SVG pattern — repeating scroll/rafter motif */
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='40'%3E%3Cpath d='M0 20 Q15 0 30 20 Q45 40 60 20 Q75 0 90 20 Q105 40 120 20' stroke='%23ffffff' stroke-width='3' fill='none'/%3E%3Cpath d='M0 10 Q15 -10 30 10 Q45 30 60 10 Q75 -10 90 10 Q105 30 120 10' stroke='%23F9A825' stroke-width='2' fill='none'/%3E%3Cpath d='M0 30 Q15 10 30 30 Q45 50 60 30 Q75 10 90 30 Q105 50 120 30' stroke='%23F9A825' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 120px 40px;
+  background-position: center;
+  pointer-events: none;
+}
+.site-header-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.site-koru {
+  width: 36px; height: 36px; flex-shrink: 0;
+}
+.site-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.1;
+}
+.site-title span {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green-light);
+  letter-spacing: 0.5px;
+}
+
+/* ── TAB BAR ───────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  background: var(--green-mid);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tab-btn {
+  flex: 1;
+  padding: 13px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-light);
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.tab-btn:hover { background: rgba(255,255,255,0.08); }
+.tab-btn.active {
+  color: var(--white);
+  border-bottom-color: var(--gold);
+  background: rgba(255,255,255,0.1);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── LEVEL SELECTOR BAR ────────────────────────────────────── */
+.level-bar {
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--green-pale);
+  border-bottom: 2px solid var(--green-light);
+  overflow-x: auto;
+}
+.level-chip {
+  padding: 8px 18px;
+  border-radius: 50px;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--white);
+  color: var(--grey-700);
+  transition: all 0.18s;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+.level-chip:hover { transform: translateY(-1px); }
+.level-chip.active { color: var(--white); box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+.level-chip[data-level="tipu"]       { border-color: #2E7D32; }
+.level-chip[data-level="tipu"].active      { background: #2E7D32; }
+.level-chip[data-level="whakatipu"]  { border-color: #1565C0; }
+.level-chip[data-level="whakatipu"].active { background: #1565C0; }
+.level-chip[data-level="pakari"]     { border-color: #AD1457; }
+.level-chip[data-level="pakari"].active    { background: #AD1457; }
+.level-chip[data-level="matatau"]    { border-color: #6A1B9A; }
+.level-chip[data-level="matatau"].active   { background: #6A1B9A; }
+
+/* ── TOPIC GRID ─────────────────────────────────────────────── */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+.topic-card {
+  padding: 22px 16px 18px;
+  border-radius: var(--radius);
+  border: 3px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+}
+.topic-card::after {
+  /* Koru watermark */
+  content: '';
+  position: absolute;
+  bottom: -18px; right: -18px;
+  width: 80px; height: 80px;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90 C20 90 5 70 5 50 C5 25 25 10 50 10 C65 10 75 20 75 35 C75 50 65 58 50 58 C40 58 33 51 33 42 C33 34 39 28 47 28' stroke='%23000' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.topic-card:hover { transform: translateY(-4px); box-shadow: 0 8px 0 rgba(0,0,0,0.15); }
+.topic-card:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+.topic-card .topic-name { font-size: 16px; font-weight: 800; margin-bottom: 3px; }
+.topic-card .topic-eng  { font-size: 12px; font-weight: 500; opacity: 0.72; margin-bottom: 6px; }
+.topic-card .topic-count { font-size: 11px; font-weight: 600; opacity: 0.55; }
+
+/* ── INTRO SCREEN ───────────────────────────────────────────── */
+.intro-screen {
+  max-width: 540px;
+  margin: 32px auto;
+  padding: 28px 24px;
+}
+.intro-badge {
+  display: inline-block;
+  padding: 5px 16px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--white);
+  letter-spacing: 0.4px;
+}
+.intro-screen h2 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.intro-screen .subtitle { color: var(--grey-700); margin-bottom: 18px; font-size: 14px; font-weight: 500; }
+.intro-screen .structure-box {
+  background: var(--green-pale);
+  border: 2px solid var(--green-light);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-deep);
+}
+.intro-screen .structure-box strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--green-mid);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── GAME AREA ──────────────────────────────────────────────── */
+.game-area {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ── PROGRESS ───────────────────────────────────────────────── */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.progress-bar-wrap {
+  flex: 1;
+  height: 10px;
+  background: var(--grey-200);
+  border-radius: 50px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 50px;
+  transition: width 0.4s ease;
+}
+.score-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: var(--green-pale);
+  color: var(--green-deep);
+  border: 2px solid var(--green-light);
+  white-space: nowrap;
+}
+
+/* ── QUESTION PANEL ─────────────────────────────────────────── */
+.question-panel {
+  background: var(--green-deep);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.question-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='28'%3E%3Cpath d='M0 14 Q10 0 20 14 Q30 28 40 14 Q50 0 60 14 Q70 28 80 14' stroke='%23ffffff' stroke-width='2.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 80px 28px;
+  background-position: bottom;
+  pointer-events: none;
+}
+.question-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--green-light);
+  margin-bottom: 8px;
+  position: relative;
+}
+.question-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.35;
+  position: relative;
+}
+
+/* ── DROP ZONE ──────────────────────────────────────────────── */
+.drop-zone-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--grey-500);
+  margin-bottom: 6px;
+}
+.drop-zone {
+  min-height: 62px;
+  border: 3px dashed var(--green-light);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  background: var(--green-pale);
+  transition: border-color 0.2s, background 0.2s;
+}
+.drop-zone.has-tiles { border-style: solid; border-color: var(--green-fern); background: var(--white); }
+.drop-zone-empty {
+  color: var(--grey-500);
+  font-size: 13px;
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* ── WORD TILES ─────────────────────────────────────────────── */
+.tile {
+  padding: 8px 14px;
+  border-radius: var(--radius-xs);
+  border: 2.5px solid;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.1s;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.12);
+}
+.tile:hover  { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); }
+.tile:active { transform: translateY(1px);  box-shadow: 0 1px 0 rgba(0,0,0,0.10); }
+.tile.used   { opacity: 0.18; pointer-events: none; box-shadow: none; }
+.tile.hint-highlight { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.tile.cat-tense { background: var(--cat-tense-bg); border-color: var(--cat-tense-border); color: var(--cat-tense-text); }
+.tile.cat-verb  { background: var(--cat-verb-bg);  border-color: var(--cat-verb-border);  color: var(--cat-verb-text);  }
+.tile.cat-det   { background: var(--cat-det-bg);   border-color: var(--cat-det-border);   color: var(--cat-det-text);   }
+.tile.cat-noun  { background: var(--cat-noun-bg);  border-color: var(--cat-noun-border);  color: var(--cat-noun-text);  }
+.tile.cat-adj   { background: var(--cat-adj-bg);   border-color: var(--cat-adj-border);   color: var(--cat-adj-text);   }
+.tile.cat-loc   { background: var(--cat-loc-bg);   border-color: var(--cat-loc-border);   color: var(--cat-loc-text);   }
+.tile.cat-conn  { background: var(--cat-conn-bg);  border-color: var(--cat-conn-border);  color: var(--cat-conn-text);  }
+.tile.cat-mod   { background: var(--cat-mod-bg);   border-color: var(--cat-mod-border);   color: var(--cat-mod-text);   }
+.tile.cat-int   { background: var(--cat-int-bg);   border-color: var(--cat-int-border);   color: var(--cat-int-text);   }
+.tile.cat-subj  { background: var(--cat-subj-bg);  border-color: var(--cat-subj-border);  color: var(--cat-subj-text);  }
+
+/* ── TILE POOL ──────────────────────────────────────────────── */
+.tile-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px;
+  background: var(--grey-100);
+  border: 2px solid var(--grey-200);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  min-height: 62px;
+}
+
+/* ── COLOUR KEY ─────────────────────────────────────────────── */
+.colour-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.key-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--grey-700);
+  background: var(--white);
+  border: 1.5px solid var(--grey-300);
+  border-radius: 50px;
+  padding: 3px 10px 3px 7px;
+}
+.key-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  border: 2px solid;
+  flex-shrink: 0;
+}
+
+/* ── BUTTONS ────────────────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.btn {
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+  position: relative;
+  top: 0;
+}
+.btn:hover  { transform: scale(1.05); }
+.btn:active { transform: scale(0.97) translateY(3px); box-shadow: none !important; }
+.btn:disabled { opacity: 0.35; pointer-events: none; }
+
+/* Fern green — primary action */
+.btn-primary {
+  background: var(--green-fern);
+  color: var(--white);
+  box-shadow: 0 5px 0 var(--green-fern-dk);
+}
+.btn-primary:hover { filter: brightness(1.07); }
+
+/* Secondary */
+.btn-secondary {
+  background: var(--white);
+  color: var(--grey-700);
+  box-shadow: 0 5px 0 var(--grey-300);
+  border: 2px solid var(--grey-300);
+}
+.btn-secondary:hover { background: var(--grey-100); }
+
+/* Hint — gold */
+.btn-hint {
+  background: var(--gold-light);
+  color: #7a5200;
+  box-shadow: 0 5px 0 #e6a800;
+  border: 2px solid var(--gold);
+}
+.btn-hint:hover { filter: brightness(1.05); }
+
+/* Next — deep green */
+.btn-next {
+  background: var(--green-deep);
+  color: var(--white);
+  box-shadow: 0 5px 0 #0a3d0a;
+}
+.btn-next:hover { filter: brightness(1.15); }
+
+/* Start */
+.btn-start {
+  background: var(--green-fern);
+  color: var(--white);
+  box-shadow: 0 5px 0 var(--green-fern-dk);
+  padding: 13px 32px;
+  font-size: 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+}
+.btn-start:hover  { transform: scale(1.05); filter: brightness(1.07); }
+.btn-start:active { transform: scale(0.97) translateY(3px); box-shadow: none; }
+
+/* ── FEEDBACK ───────────────────────────────────────────────── */
+.feedback-panel {
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.feedback-correct {
+  background: #E8F5E9;
+  border: 2.5px solid var(--green-fern);
+  color: var(--green-deep);
+}
+.feedback-incorrect {
+  background: #FFEBEE;
+  border: 2.5px solid #EF5350;
+  color: #B71C1C;
+}
+.feedback-title { font-weight: 800; font-size: 16px; margin-bottom: 5px; }
+.feedback-sentence { font-style: italic; margin-top: 4px; font-weight: 500; }
+
+/* ── COMPLETE SCREEN ────────────────────────────────────────── */
+.complete-screen {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  text-align: center;
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 3px solid var(--green-light);
+  position: relative;
+  overflow: hidden;
+}
+.complete-screen::after {
+  content: '';
+  position: absolute;
+  bottom: -24px; right: -24px;
+  width: 120px; height: 120px;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90 C20 90 5 70 5 50 C5 25 25 10 50 10 C65 10 75 20 75 35 C75 50 65 58 50 58 C40 58 33 51 33 42 C33 34 39 28 47 28' stroke='%231B5E20' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.stars         { font-size: 40px; margin-bottom: 14px; letter-spacing: 5px; }
+.complete-score  { font-size: 52px; font-weight: 800; color: var(--green-deep); margin-bottom: 4px; }
+.complete-label  { color: var(--grey-700); margin-bottom: 22px; font-size: 14px; font-weight: 600; }
+.complete-title  { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.complete-subtitle { color: var(--grey-700); margin-bottom: 28px; font-size: 14px; font-weight: 500; }
+
+/* ── BACK BUTTON ────────────────────────────────────────────── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  margin: 14px 18px 0;
+  border-radius: 50px;
+  border: 2.5px solid var(--green-light);
+  background: var(--white);
+  color: var(--green-deep);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow: 0 3px 0 var(--green-light);
+}
+.back-btn:hover  { transform: scale(1.04); }
+.back-btn:active { transform: scale(0.97); box-shadow: none; }
+
+/* ── CELEBRATION MODAL ──────────────────────────────────────── */
+.celebration-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
+.celebration-overlay.show { display: flex; }
+.celebration-modal {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 40px 36px;
+  text-align: center;
+  max-width: 340px;
+  width: 90%;
+  border: 4px solid var(--green-fern);
+  box-shadow: 0 8px 0 var(--green-fern-dk);
+  animation: celebPop 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  position: relative;
+  overflow: hidden;
+}
+@keyframes celebPop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.celebration-modal .celeb-emoji { font-size: 56px; line-height: 1; margin-bottom: 12px; }
+.celebration-modal .celeb-phrase {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--green-deep);
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+.celebration-modal .celeb-sub {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--grey-700);
+}
+
+/* ── CSS CONFETTI ───────────────────────────────────────────── */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 600;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg) scale(0.6); opacity: 0; }
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .topic-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; }
+  .game-area  { padding: 14px; }
+  .question-text { font-size: 17px; }
+  .site-title { font-size: 15px; }
+  .btn { font-size: 13px; padding: 10px 15px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SITE HEADER -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <svg class="site-koru" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M50 88 C22 88 8 68 8 50 C8 28 26 12 50 12 C66 12 78 23 78 38 C78 53 67 62 52 62 C42 62 34 55 34 45 C34 36 41 30 50 30" stroke="#4CAF50" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="88" r="5" fill="#F9A825"/>
+    </svg>
+    <div>
+      <div class="site-title">
+        Te Ara Kōrero
+        <span>Māori Sentence Builder</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('levels')" id="tab-levels">Ngā Taumata — Levels</button>
+  <button class="tab-btn" onclick="switchTab('topics')" id="tab-topics">Ngā Kaupapa — Topics</button>
+</div>
+
+<!-- CELEBRATION MODAL -->
+<div class="celebration-overlay" id="celebration-overlay" onclick="closeCelebration()">
+  <div class="celebration-modal" onclick="event.stopPropagation()">
+    <div class="celeb-emoji" id="celeb-emoji">🌿</div>
+    <div class="celeb-phrase" id="celeb-phrase">Ka rawe!</div>
+    <div class="celeb-sub" id="celeb-sub">Excellent!</div>
+  </div>
+</div>
+
+<!-- CONFETTI CANVAS -->
+<div class="confetti-container" id="confetti-container"></div>
+
+<!-- LEVELS TAB -->
+<div class="tab-panel active" id="panel-levels">
+  <div class="level-bar">
+    <button class="level-chip active" data-level="tipu" onclick="selectLevel('tipu')">Tipu — Tau 1–2</button>
+    <button class="level-chip" data-level="whakatipu" onclick="selectLevel('whakatipu')">Whakatipu — Tau 3–4</button>
+    <button class="level-chip" data-level="pakari" onclick="selectLevel('pakari')">Pakari — Tau 5–6</button>
+    <button class="level-chip" data-level="matatau" onclick="selectLevel('matatau')">Matatau — Tau 7–8</button>
+  </div>
+  <div id="levels-content"></div>
+</div>
+
+<!-- TOPICS TAB -->
+<div class="tab-panel" id="panel-topics">
+  <div id="topics-content"></div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const CAT_LABELS = {
+  'cat-tense': 'Tohu wā',
+  'cat-verb':  'Kupu Mahi',
+  'cat-det':   'Kupu Tohu',
+  'cat-noun':  'Kupu Ingoa',
+  'cat-adj':   'Kupu Āhua',
+  'cat-loc':   'Kupu Tūhono Wāhi',
+  'cat-conn':  'Kupu Tūhono',
+  'cat-mod':   'Kupu Whakarerekē',
+  'cat-int':   'Kupu Whakapiki',
+  'cat-subj':  'Kupu Ingoa (subject)',
+};
+
+const CAT_DOT_STYLE = {
+  'cat-tense': 'background:var(--cat-tense-bg);border-color:var(--cat-tense-border)',
+  'cat-verb':  'background:var(--cat-verb-bg);border-color:var(--cat-verb-border)',
+  'cat-det':   'background:var(--cat-det-bg);border-color:var(--cat-det-border)',
+  'cat-noun':  'background:var(--cat-noun-bg);border-color:var(--cat-noun-border)',
+  'cat-adj':   'background:var(--cat-adj-bg);border-color:var(--cat-adj-border)',
+  'cat-loc':   'background:var(--cat-loc-bg);border-color:var(--cat-loc-border)',
+  'cat-conn':  'background:var(--cat-conn-bg);border-color:var(--cat-conn-border)',
+  'cat-mod':   'background:var(--cat-mod-bg);border-color:var(--cat-mod-border)',
+  'cat-int':   'background:var(--cat-int-bg);border-color:var(--cat-int-border)',
+  'cat-subj':  'background:var(--cat-subj-bg);border-color:var(--cat-subj-border)',
+};
+
+// Sentence format: { words:[{w,c}], translation:"", distractors:[{w,c}] }
+// c = CSS class: cat-tense / cat-verb / cat-det / cat-noun / cat-adj / cat-loc / cat-conn / cat-mod / cat-int / cat-subj
+
+const T = (w,c) => ({w,c});
+
+// ── LEVEL 1: TIPU (Tau 1-2) — 4-word: Tohu wā + Verb + Det + Noun ──────────
+const TIPU_SENTENCES = [
+  { words:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')], translation:'The child is eating.', distractors:[T('Ka','cat-tense'),T('inu','cat-verb'),T('ngā','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('inu','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The teacher is drinking.', distractors:[T('Ka','cat-tense'),T('kai','cat-verb'),T('ngā','cat-det'),T('tamaiti','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children ran.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('hoa','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('moe','cat-verb'),T('te','cat-det'),T('pēpi','cat-noun')], translation:'The baby is sleeping.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')], translation:'The family went.', distractors:[T('Kei te','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('kaimahi','cat-noun')], translation:'The worker is working.', distractors:[T('Ka','cat-tense'),T('pānui','cat-verb'),T('ngā','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('manuhiri','cat-noun')], translation:'The visitor returned.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('koro','cat-noun')], translation:'The grandfather is sitting.', distractors:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('kuia','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')], translation:'The students stood.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')], translation:'The child is reading.', distractors:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The teacher wrote.', distractors:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('ako','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children are learning.', distractors:[T('Ka','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children played.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The teacher is talking.', distractors:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')], translation:'The students listened.', distractors:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('titiro','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')], translation:'The child is looking.', distractors:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kurī','cat-noun')], translation:'The dog ran.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('ngeru','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('ngeru','cat-noun')], translation:'The cat is sitting.', distractors:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('kurī','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('manu','cat-noun')], translation:'The bird flew.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('ika','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('tū','cat-verb'),T('te','cat-det'),T('kaumātua','cat-noun')], translation:'The elder is standing.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children returned.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('koro','cat-noun')], translation:'The grandfather is eating.', distractors:[T('Ka','cat-tense'),T('inu','cat-verb'),T('ngā','cat-det'),T('kuia','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')], translation:'The chief sat.', distractors:[T('Kei te','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('kaumātua','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun')], translation:'The people are working.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kaimahi','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('piki','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')], translation:'The child climbed.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+];
+
+// ── LEVEL 2: WHAKATIPU (Tau 3-4) — adds object phrase ──────────────────────
+const WHAKATIPU_SENTENCES = [
+  { words:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('āporo','cat-noun')], translation:'The child is eating the apple.', distractors:[T('Ka','cat-tense'),T('inu','cat-verb'),T('ngā','cat-det'),T('miraka','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pukapuka','cat-noun')], translation:'The student read the book.', distractors:[T('Kei te','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('reta','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kākahu','cat-noun')], translation:'The mother is washing the clothes.', distractors:[T('Ka','cat-tense'),T('mahi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('hanga','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('whare','cat-noun')], translation:'The father built the house.', distractors:[T('Kei te','cat-tense'),T('whakarite','cat-verb'),T('ngā','cat-det'),T('tēpu','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('kawe','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pēke','cat-noun')], translation:'The teacher is carrying the bag.', distractors:[T('Ka','cat-tense'),T('tango','cat-verb'),T('ngā','cat-det'),T('pukapuka','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun')], translation:'The mother cooked the food.', distractors:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('tāna','cat-det'),T('pene','cat-noun')], translation:'The child is looking for their pen.', distractors:[T('Ka','cat-tense'),T('tango','cat-verb'),T('ngā','cat-det'),T('pukapuka','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tango','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('poi','cat-noun')], translation:'The child took the poi.', distractors:[T('Kei te','cat-tense'),T('kawe','cat-verb'),T('ngā','cat-det'),T('pēke','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('ingoa','cat-noun')], translation:'The students are writing their names.', distractors:[T('Ka','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('reta','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun')], translation:'The teacher planted the seeds.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('māra','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('kuia','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('mokopuna','cat-noun')], translation:'The grandmother is caring for the grandchildren.', distractors:[T('Ka','cat-tense'),T('manaaki','cat-verb'),T('te','cat-det'),T('koro','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('hopu','cat-verb'),T('te','cat-det'),T('kaitākaro','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('poi','cat-noun')], translation:'The player caught the poi.', distractors:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('whakaako','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The teacher is teaching the children.', distractors:[T('Ka','cat-tense'),T('ako','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('manaaki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun')], translation:'The family welcomed the visitors.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('kaumātua','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun')], translation:'The mother is buying the food.', distractors:[T('Ka','cat-tense'),T('kawe','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('kite','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('tōna','cat-det'),T('hoa','cat-noun')], translation:'The child saw their friend.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('tapahi','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('rākau','cat-noun')], translation:'The father is cutting the wood.', distractors:[T('Ka','cat-tense'),T('hanga','cat-verb'),T('ngā','cat-det'),T('whare','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('kohi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun')], translation:'The children collected the seeds.', distractors:[T('Kei te','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The students are listening to the teacher.', distractors:[T('Ka','cat-tense'),T('titiro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('inu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('wai','cat-noun')], translation:'The child drank the water.', distractors:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('ngā','cat-det'),T('miraka','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('titiro','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('ākonga','cat-noun')], translation:'The teacher is watching the students.', distractors:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('kauhoe','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The children swam in the sea.', distractors:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamaiti','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('whakaaro','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('tōna','cat-det'),T('whānau','cat-noun')], translation:'The child is thinking about their family.', distractors:[T('Ka','cat-tense'),T('mahara','cat-verb'),T('ngā','cat-det'),T('hoa','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('peita','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('whare','cat-noun')], translation:'The child painted the house.', distractors:[T('Kei te','cat-tense'),T('hanga','cat-verb'),T('ngā','cat-det'),T('tēpu','cat-noun')] },
+  { words:[T('Kei te','cat-tense'),T('tuku','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('pukapuka','cat-noun')], translation:'The teacher is giving out the books.', distractors:[T('Ka','cat-tense'),T('kawe','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('puke','cat-noun')], translation:'The child came down the hill.', distractors:[T('Kei te','cat-tense'),T('piki','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+];
+
+// ── LEVEL 3: PAKARI (Tau 5-6) — adds adjective + location ──────────────────
+const PAKARI_SENTENCES = [
+  { words:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun'),T('reka','cat-adj'),T('kei','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('tēpu','cat-noun')], translation:'The child is eating the delicious food on the table.', distractors:[T('Ka','cat-tense'),T('inu','cat-verb'),T('ngā','cat-det'),T('haunga','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('pai','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun')], translation:'The good children played at the playground.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('akomanga','cat-noun')], translation:'The confident student is reading in the classroom.', distractors:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('mataku','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kurī','cat-noun'),T('tere','cat-adj'),T('i','cat-loc'),T('waho','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'The fast dog ran outside the house.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('pōturi','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kuia','cat-noun'),T('māhana','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'The warm grandmother is sitting inside the house.', distractors:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('makariri','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('hīkoi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('pakari','cat-adj'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun')], translation:'The strong students walked to school.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('ngoikore','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('te','cat-det'),T('rākau','cat-noun'),T('nui','cat-adj'),T('i','cat-loc'),T('taha mauī','cat-loc'),T('o te','cat-det'),T('whare','cat-noun')], translation:'The big tree is growing on the left side of the house.', distractors:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('ngā','cat-det'),T('iti','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('rongonui','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('akomanga','cat-noun')], translation:'The well-known teacher spoke in front of the class.', distractors:[T('Kei te','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ngākau','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('kaimahi','cat-noun'),T('pukumahi','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('tari','cat-noun')], translation:'The hardworking employee is working inside the office.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('mārie','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('kauhoe','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('moana','cat-noun'),T('hōhonu','cat-adj')], translation:'The brave child swam in the deep sea.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('mataku','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun'),T('iti','cat-adj'),T('ki','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('māra','cat-noun')], translation:'The teacher is planting the small seeds in the garden.', distractors:[T('Ka','cat-tense'),T('kohi','cat-verb'),T('ngā','cat-det'),T('nui','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('tū','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun'),T('kaha','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('marae','cat-noun')], translation:'The strong chief stood in front of the marae.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('ngoikore','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('huawhenua','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The mother is buying the fresh vegetables at the shop.', distractors:[T('Ka','cat-tense'),T('kawe','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('rere','cat-verb'),T('ngā','cat-det'),T('manu','cat-noun'),T('ataahua','cat-adj'),T('ki','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('maunga','cat-noun')], translation:'The beautiful birds flew above the mountain.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('eke','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('harikoa','cat-adj'),T('ki','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('pahi','cat-noun')], translation:'The happy children are getting on the bus.', distractors:[T('Ka','cat-tense'),T('heke','cat-verb'),T('te','cat-det'),T('pōuri','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('mārama','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('akomanga','cat-noun')], translation:'The bright child spoke in front of the class.', distractors:[T('Kei te','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('pōuri','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('hīkoi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('māhana','cat-adj'),T('i','cat-loc'),T('tātahi','cat-noun')], translation:'The warm family is walking on the beach.', distractors:[T('Ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('makariri','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('moe','cat-verb'),T('te','cat-det'),T('pēpi','cat-noun'),T('mārie','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('moenga','cat-noun')], translation:'The peaceful baby slept in the bed.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('riri','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('pakari','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('whare pukapuka','cat-noun')], translation:'The capable students are reading in the library.', distractors:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('te','cat-det'),T('uaua','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('waiata','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('harikoa','cat-adj'),T('i','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('atamira','cat-noun')], translation:'The happy children sang on the stage.', distractors:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('pōuri','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('māra','cat-noun')], translation:'The new plants are growing in the garden.', distractors:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('te','cat-det'),T('tawhito','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('tere','cat-adj'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun')], translation:'The fast child ran to school.', distractors:[T('Kei te','cat-tense'),T('hīkoi','cat-verb'),T('ngā','cat-det'),T('pōturi','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('koro','cat-noun'),T('māuiui','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'The sick grandfather is resting inside the house.', distractors:[T('Ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('pakari','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('mahi','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('ngākau nui','cat-adj'),T('i','cat-loc'),T('waho','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'The enthusiastic people worked outside the house.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('mārie','cat-adj')] },
+  { words:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('tumuaki','cat-noun'),T('kaha','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('kura','cat-noun')], translation:'The strong principal is speaking in front of the school.', distractors:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ngoikore','cat-adj')] },
+];
+
+// ── LEVEL 4: MATATAU (Tau 7-8) — complex, multi-clause ─────────────────────
+const MATATAU_SENTENCES = [
+  { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun'),T('pukumahi','cat-adj'),T('ā','cat-conn'),T('kei te','cat-tense'),T('ako','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('reo','cat-noun')], translation:'The hardworking student is working and learning the language.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('mārie','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('marae','cat-noun'),T('engari','cat-conn'),T('kāore','cat-conn'),T('ia','cat-subj'),T('i','cat-loc'),T('reira','cat-loc')], translation:'The family went to the marae but she was not there.', distractors:[T('Kei te','cat-tense'),T('ā','cat-conn'),T('mātou','cat-subj'),T('hoki','cat-conn')] },
+  { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('hīkoi','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('awa','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('kauhoe','cat-verb'),T('mātou','cat-subj')], translation:'Therefore, we walked to the river and we swam.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('rere','cat-verb')] },
+  { words:[T('Ahakoa','cat-conn'),T('kei te','cat-tense'),T('ua','cat-verb'),T('ka','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ki','cat-loc'),T('waho','cat-loc')], translation:'Even though it is raining, the children are going outside.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('te','cat-det'),T('hau','cat-noun')] },
+  { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('harikoa','cat-adj'),T('ia','cat-subj'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('waiata','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('akomanga','cat-noun')], translation:'She was very happy, therefore she sang in front of the class.', distractors:[T('Kei te','cat-tense'),T('me','cat-conn'),T('rātou','cat-subj'),T('rawa','cat-int')] },
+  { words:[T('Kei te','cat-tense'),T('whakaaro','cat-verb'),T('au','cat-subj'),T('mō','cat-conn'),T('tōku','cat-det'),T('whānau','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('mahara','cat-verb'),T('au','cat-subj'),T('i','cat-loc'),T('ō','cat-det'),T('mātou','cat-subj'),T('wā','cat-noun')], translation:'I am thinking about my family and I am remembering our times.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('ia','cat-subj'),T('nō reira','cat-conn')] },
+  { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('te','cat-det'),T('manuhiri','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('marae','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('karanga','cat-verb'),T('ngā','cat-det'),T('wāhine','cat-noun')], translation:'The visitors arrived at the marae and the women called.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('hoki','cat-conn')] },
+  { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tū','cat-verb'),T('ia','cat-subj'),T('ā','cat-conn'),T('ka','cat-tense'),T('whaikōrero','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('iwi','cat-noun')], translation:'Therefore he stood and gave a speech in front of the people.', distractors:[T('Kei te','cat-tense'),T('me','cat-conn'),T('rātou','cat-subj'),T('kōrero','cat-verb')] },
+  { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('uaua','cat-adj'),T('te','cat-det'),T('mahi','cat-noun'),T('engari','cat-conn'),T('ka','cat-tense'),T('oti','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('a ia','cat-subj')], translation:'The work was very difficult but she completed it.', distractors:[T('Kei te','cat-tense'),T('nō reira','cat-conn'),T('mātou','cat-subj'),T('rawa','cat-int')] },
+  { words:[T('Kei te','cat-tense'),T('ako','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('reo','cat-noun'),T('Māori','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('kōrero','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('ō','cat-det'),T('mātou','cat-subj'),T('mātua','cat-noun')], translation:'We are learning the Māori language and we are speaking to our parents.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('tuhi','cat-verb')] },
+  { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('tamaiti','cat-noun'),T('iti','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('kaha','cat-adj'),T('tonu','cat-mod'),T('ia','cat-subj')], translation:'Although she is a small child, she is still strong.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('ngoikore','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('te','cat-det'),T('ua','cat-noun'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'The rain fell, therefore the children stayed inside the house.', distractors:[T('Kei te','cat-tense'),T('ahakoa','cat-conn'),T('mātou','cat-subj'),T('oma','cat-verb')] },
+  { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('a','cat-det'),T('Māia','cat-noun'),T('me','cat-conn'),T('a','cat-det'),T('Rēhia','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun'),T('anō','cat-conn')], translation:'Māia and Rēhia are working in the garden together.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('whakatō','cat-verb')] },
+  { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('ataahua','cat-adj'),T('te','cat-det'),T('wā','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('katoa','cat-mod')], translation:'The time was very beautiful and all the people were happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rawa','cat-int'),T('ngoikore','cat-adj')] },
+  { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('whakarite','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('kaupeka','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('oti','cat-verb'),T('wawe','cat-mod')], translation:'Therefore they organised the programme and it finished quickly.', distractors:[T('Kei te','cat-tense'),T('ahakoa','cat-conn'),T('mātou','cat-subj'),T('tonu','cat-mod')] },
+  { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('rātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun'),T('engari','cat-conn'),T('kāore','cat-conn'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('reira','cat-loc')], translation:'They arrived at school but the teacher was not there.', distractors:[T('Kei te','cat-tense'),T('ā','cat-conn'),T('ia','cat-subj'),T('nō reira','cat-conn')] },
+  { words:[T('Kei te','cat-tense'),T('whakaako','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('ako','cat-verb'),T('rātou','cat-subj'),T('tino','cat-int'),T('pai','cat-adj')], translation:'The teacher is teaching the children and they are learning very well.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('rawa','cat-int')] },
+  { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('rā','cat-noun'),T('ua','cat-adj'),T('ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('waho','cat-loc')], translation:'Although it is a rainy day, the children are playing outside.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('māhana','cat-adj')] },
+  { words:[T('Ka','cat-tense'),T('karanga','cat-verb'),T('te','cat-det'),T('kuia','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('roimata','cat-noun'),T('tonu','cat-mod')], translation:'The elder called and the tears fell continuously.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('wawe','cat-mod')] },
+  { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('rangatira','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('manaaki','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun')], translation:'Therefore all the chiefs stood and they welcomed the visitors.', distractors:[T('Kei te','cat-tense'),T('ahakoa','cat-conn'),T('mātou','cat-subj'),T('engari','cat-conn')] },
+  { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('pakari','cat-adj'),T('tōna','cat-det'),T('reo','cat-noun'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('whaikōrero','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('hui','cat-noun')], translation:'Their language was very strong, therefore they gave a speech at the meeting.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('rawa','cat-int')] },
+  { words:[T('Ahakoa','cat-conn'),T('kei te','cat-tense'),T('ngenge','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('mahi','cat-verb'),T('tonu','cat-mod'),T('ia','cat-subj'),T('mō','cat-conn'),T('tōna','cat-det'),T('whānau','cat-noun')], translation:'Although she is tired, she continues to work for her family.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('wawe','cat-mod')] },
+  { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('maunga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tae','cat-verb'),T('ki','cat-loc'),T('te','cat-det'),T('awa','cat-noun'),T('wawe','cat-mod')], translation:'They came down the mountain and quickly arrived at the river.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tonu','cat-mod')] },
+  { words:[T('Kei te','cat-tense'),T('ako','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('reo','cat-noun'),T('Māori','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('aha','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-subj'),T('kura','cat-noun')], translation:'The students are learning the Māori language and doing it in their schools.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tuhi','cat-verb')] },
+  { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('whakaaro','cat-verb'),T('ia','cat-subj'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('māia','cat-adj'),T('tonu','cat-mod'),T('tōna','cat-det'),T('ngākau','cat-noun')], translation:'Therefore he reflected and his heart remained very courageous.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('rawa','cat-int')] },
+];
+
+// ── TOPICS ───────────────────────────────────────────────────────────────────
+
+const TOPICS = [
+  {
+    id: 'kura', name: 'Kura', eng: 'School', color: '#2d6ab5', lightBg: '#d0e4f7', darkBg: '#1a2e40',
+    sentences: [
+      { words:[T('Kei te','cat-tense'),T('ako','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children are learning.', distractors:[T('Ka','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('tāna','cat-det'),T('reta','cat-noun')], translation:'The student wrote their letter.', distractors:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('ngā','cat-det'),T('pukapuka','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pukapuka','cat-noun')], translation:'The teacher is reading the book.', distractors:[T('Ka','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('akomanga','cat-noun')], translation:'The students stood in front of the classroom.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('whakaako','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('akomanga','cat-noun')], translation:'The teacher is teaching the children in the classroom.', distractors:[T('Ka','cat-tense'),T('ako','cat-verb'),T('te','cat-det'),T('tumuaki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun')], translation:'The children went to school.', distractors:[T('Kei te','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('harikoa','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun')], translation:'The happy children are running at the playground.', distractors:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('te','cat-det'),T('pōuri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('pai','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The good students listened to the teacher.', distractors:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('kawe','cat-verb'),T('te','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('tōna','cat-det'),T('pēke','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun')], translation:'The student is carrying their bag to school.', distractors:[T('Ka','cat-tense'),T('tango','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun'),T('i','cat-loc'),T('muri','cat-loc'),T('i te','cat-loc'),T('kura','cat-noun')], translation:'The children played at the playground after school.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tuhi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('ingoa','cat-noun'),T('i','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('pepa','cat-noun')], translation:'The students are writing their names on the paper.', distractors:[T('Ka','cat-tense'),T('pānui','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('hīkoi','cat-verb'),T('te','cat-det'),T('tumuaki','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('kura','cat-noun')], translation:'The principal walked inside the school.', distractors:[T('Kei te','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('mahi','cat-noun')], translation:'The confident students are doing their work.', distractors:[T('Ka','cat-tense'),T('ako','cat-verb'),T('te','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('oti','cat-verb'),T('te','cat-det'),T('mahi','cat-noun'),T('i','cat-loc'),T('a','cat-det'),T('Tama','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('ia','cat-subj')], translation:'Tama finished the work and he was happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('pōuri','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('pānui','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('pukapuka','cat-noun')], translation:'Therefore the students read their books.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tuhi','cat-verb')] },
+      { words:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('Māori','cat-adj'),T('ki','cat-loc'),T('ngā','cat-det'),T('ākonga','cat-noun')], translation:'The Māori teacher is speaking to the students.', distractors:[T('Ka','cat-tense'),T('whakarongo','cat-verb'),T('te','cat-det'),T('tumuaki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pahi','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('kura','cat-noun')], translation:'The children got off the bus at school.', distractors:[T('Kei te','cat-tense'),T('eke','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('ako','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('pāngarau','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('mārama','cat-adj'),T('mātou','cat-subj')], translation:'We are learning maths and we understand.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('pōuri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('māia','cat-adj'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kura','cat-noun')], translation:'The children were very confident at their school.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('te','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('mahi','cat-noun'),T('uaua','cat-adj'),T('ka','cat-tense'),T('oti','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('a','cat-det'),T('Hine','cat-noun')], translation:'Although it was a difficult task, Hine completed it.', distractors:[T('Kei te','cat-tense'),T('nō reira','cat-conn'),T('mātou','cat-subj'),T('pai','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('whare pukapuka','cat-noun'),T('i','cat-loc'),T('ia','cat-subj'),T('rā','cat-noun')], translation:'The students are going to the library every day.', distractors:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('whaikōrero','cat-verb'),T('te','cat-det'),T('tumuaki','cat-noun'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('kura','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('whakarongo','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun')], translation:'The principal gave a speech in front of the school and the people listened.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kōrero','cat-verb')] },
+      { words:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('ringaringa','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('rūma horoi','cat-noun')], translation:'The children are washing their hands in the bathroom.', distractors:[T('Ka','cat-tense'),T('tapahi','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('waiata','cat-verb'),T('rātou','cat-subj'),T('mō','cat-conn'),T('tō','cat-det'),T('rātou','cat-subj'),T('kura','cat-noun')], translation:'Therefore the students stood and they sang for their school.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kōrero','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('pai','cat-adj'),T('te','cat-det'),T('mahi','cat-noun'),T('a','cat-det'),T('ngā','cat-det'),T('ākonga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('te','cat-det'),T('kaiako','cat-noun')], translation:'The work of the students was very good and the teacher was happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+    ]
+  },
+  {
+    id: 'taiao', name: 'Taiao', eng: 'Environment', color: '#2d9a6a', lightBg: '#d4edda', darkBg: '#1a3a22',
+    sentences: [
+      { words:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('te','cat-det'),T('rākau','cat-noun')], translation:'The tree is growing.', distractors:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('manu','cat-noun'),T('i','cat-loc'),T('runga','cat-loc')], translation:'The bird flew above.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('ika','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('ua','cat-verb'),T('i','cat-loc'),T('waho','cat-loc')], translation:'It is raining outside.', distractors:[T('Ka','cat-tense'),T('hau','cat-verb'),T('te','cat-det'),T('ua','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The new plants grew in the garden.', distractors:[T('Kei te','cat-tense'),T('puāwai','cat-verb'),T('te','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('awa','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The river is flowing to the sea.', distractors:[T('Ka','cat-tense'),T('rere','cat-verb'),T('ngā','cat-det'),T('maunga','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun'),T('ataahua','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The beautiful plants bloomed in the garden.', distractors:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('ika','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('awa','cat-noun')], translation:'The fish are living in the river.', distractors:[T('Ka','cat-tense'),T('kauhoe','cat-verb'),T('te','cat-det'),T('moana','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('hau','cat-verb'),T('te','cat-det'),T('hau','cat-noun'),T('nui','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('ngahere','cat-noun')], translation:'A strong wind blew in the bush.', distractors:[T('Kei te','cat-tense'),T('ua','cat-verb'),T('ngā','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('kohi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('hua','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('ngahere','cat-noun')], translation:'The children are gathering fruit in the bush.', distractors:[T('Ka','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('whiti','cat-verb'),T('te','cat-det'),T('rā','cat-noun'),T('māhana','cat-adj'),T('ki','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('ngahere','cat-noun')], translation:'The warm sun shone above the bush.', distractors:[T('Kei te','cat-tense'),T('ua','cat-verb'),T('ngā','cat-det'),T('makariri','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('taiao','cat-noun')], translation:'The people are looking after the environment.', distractors:[T('Ka','cat-tense'),T('horoi','cat-verb'),T('te','cat-det'),T('kaimahi','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('wai','cat-noun'),T('māmā','cat-adj'),T('i','cat-loc'),T('raro','cat-loc'),T('i te','cat-loc'),T('ara','cat-noun')], translation:'The light water flowed under the path.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('taumaha','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('piki','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('rākau','cat-noun'),T('nui','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('ngahere','cat-noun')], translation:'The child is climbing the big tree in the bush.', distractors:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The family planted the seeds in the garden.', distractors:[T('Kei te','cat-tense'),T('kohi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('manu','cat-noun'),T('ataahua','cat-adj'),T('ki','cat-loc'),T('te','cat-det'),T('maunga','cat-noun')], translation:'The beautiful birds are going to the mountain.', distractors:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('maringi','cat-verb'),T('te','cat-det'),T('ua','cat-noun'),T('ki','cat-loc'),T('runga','cat-loc'),T('i te','cat-loc'),T('māra','cat-noun')], translation:'The rain fell on the garden.', distractors:[T('Kei te','cat-tense'),T('ua','cat-verb'),T('ngā','cat-det'),T('rākau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('kiwi','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('ngahere','cat-noun'),T('hōhonu','cat-adj')], translation:'The kiwi are living in the deep bush.', distractors:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('teitei','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('ataahua','cat-adj'),T('te','cat-det'),T('moana','cat-noun'),T('i','cat-loc'),T('tēnei','cat-det'),T('rā','cat-noun')], translation:'The sea was very beautiful today.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tiaki','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ō','cat-det'),T('mātou','cat-subj'),T('taonga','cat-noun'),T('taiao','cat-noun')], translation:'Therefore we look after our natural treasures.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('horoi','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('pupuhi','cat-verb'),T('te','cat-det'),T('hau','cat-noun'),T('makariri','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('maunga','cat-noun')], translation:'The cold wind blew on the mountain.', distractors:[T('Kei te','cat-tense'),T('ua','cat-verb'),T('ngā','cat-det'),T('māhana','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('ka','cat-tense'),T('ua','cat-verb'),T('ka','cat-tense'),T('tipu','cat-verb'),T('tonu','cat-mod'),T('ngā','cat-det'),T('tipu','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'Although it rained, the plants kept growing in the garden.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('te','cat-det'),T('rākau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('kauhoe','cat-verb'),T('ngā','cat-det'),T('ika','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('awa','cat-noun'),T('māmā','cat-adj')], translation:'The fish are swimming in the clear river.', distractors:[T('Ka','cat-tense'),T('rere','cat-verb'),T('te','cat-det'),T('hōhonu','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whai','cat-verb'),T('te','cat-det'),T('ngeru','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('manu','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The cat chased the bird in the garden.', distractors:[T('Kei te','cat-tense'),T('hopu','cat-verb'),T('ngā','cat-det'),T('kurī','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('kohi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('huawhenua','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The family is gathering fresh vegetables in the garden.', distractors:[T('Ka','cat-tense'),T('whakatō','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('māhana','cat-adj'),T('te','cat-det'),T('rā','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ki','cat-loc'),T('tātahi','cat-noun')], translation:'The day was very warm and the children went to the beach.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('makariri','cat-adj')] },
+    ]
+  },
+  {
+    id: 'hakinakina', name: 'Hākinakina', eng: 'Sport', color: '#c05a2a', lightBg: '#fde8d8', darkBg: '#3a2010',
+    sentences: [
+      { words:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The children played.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kaitākaro','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kaitākaro','cat-noun'),T('tere','cat-adj')], translation:'The player is running fast.', distractors:[T('Ka','cat-tense'),T('hīkoi','cat-verb'),T('ngā','cat-det'),T('pōturi','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hopu','cat-verb'),T('te','cat-det'),T('kaitākaro','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('poi','cat-noun')], translation:'The player caught the poi.', distractors:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('kauhoe','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The child is swimming in the sea.', distractors:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('awa','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('harikoa','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun')], translation:'The happy children played at the playground.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('pōuri','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('piki','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('puke','cat-noun')], translation:'The brave child is climbing the hill.', distractors:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('eke','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('hoiho','cat-noun')], translation:'The children rode their horses.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('kaitākaro','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('au','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('kēmu','cat-noun'),T('hou','cat-adj')], translation:'I am playing the new game.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ia','cat-subj'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('tere','cat-adj'),T('ia','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('oma','cat-noun')], translation:'She was very fast in the race.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('mātou','cat-subj'),T('pōturi','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('hīkoi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('tātahi','cat-noun')], translation:'The family is walking on the beach.', distractors:[T('Ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('kauhoe','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('pakari','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The strong children swam in the sea.', distractors:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('te','cat-det'),T('ngoikore','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('whakarite','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kēmu','cat-noun'),T('hou','cat-adj')], translation:'The teacher is preparing the new game.', distractors:[T('Ka','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('ngā','cat-det'),T('kaitākaro','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun'),T('wawe','cat-mod')], translation:'The players arrived at the field quickly.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('tonu','cat-mod')] },
+      { words:[T('Kei te','cat-tense'),T('tākaro','cat-verb'),T('ngā','cat-det'),T('kaitākaro','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun')], translation:'The confident players are playing on the field.', distractors:[T('Ka','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('kaha','cat-adj'),T('rātou','cat-subj'),T('ā','cat-conn'),T('ka','cat-tense'),T('toa','cat-verb'),T('rātou','cat-subj')], translation:'They were very strong and they won.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('ngoikore','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('kaitākaro','cat-noun'),T('katoa','cat-mod'),T('ki','cat-loc'),T('te','cat-det'),T('papa tākaro','cat-noun')], translation:'Therefore all the players ran to the field.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tonu','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('puke','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('rātou','cat-subj')], translation:'The children came down the hill and they were happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('pōuri','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('whakaaro','cat-verb'),T('au','cat-subj'),T('mō','cat-conn'),T('te','cat-det'),T('kēmu','cat-noun'),T('ā','cat-conn'),T('kei te','cat-tense'),T('māia','cat-adj'),T('tōku','cat-det'),T('ngākau','cat-noun')], translation:'I am thinking about the game and my heart is confident.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('ia','cat-subj'),T('mataku','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('ka','cat-tense'),T('ngenge','cat-adj'),T('ngā','cat-det'),T('kaitākaro','cat-noun'),T('ka','cat-tense'),T('tākaro','cat-verb'),T('tonu','cat-mod'),T('rātou','cat-subj')], translation:'Although the players were tired, they kept playing.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('wawe','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('pai','cat-adj'),T('te','cat-det'),T('tākaro','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('koa','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('katoa','cat-mod')], translation:'The game was very good and all the people were joyful.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('eke','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('tōna','cat-det'),T('hoiho','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pāmu','cat-noun')], translation:'The brave child rode their horse on the farm.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('kaitākaro','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('waiata','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('whānau','cat-noun')], translation:'Therefore the players stood and they sang in front of the family.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kōrero','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('ātaahua','cat-adj'),T('te','cat-det'),T('tākaro','cat-noun'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('hoki','cat-verb'),T('mātou','cat-subj'),T('ā','cat-conn'),T('ka','cat-tense'),T('whakaaro','cat-verb'),T('mātou','cat-subj'),T('mō','cat-conn'),T('tērā','cat-det'),T('rā','cat-noun')], translation:'The game was very beautiful, therefore we returned and we thought about that day.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('kino','cat-adj')] },
+    ]
+  },
+  {
+    id: 'kainga', name: 'Kāinga', eng: 'Home', color: '#b52d7a', lightBg: '#fce4ec', darkBg: '#3a1020',
+    sentences: [
+      { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')], translation:'The family is sitting.', distractors:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun')], translation:'Mum cooked the food.', distractors:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('rīhi','cat-noun')], translation:'Dad is washing the dishes.', distractors:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('moenga','cat-noun')], translation:'The children slept in their beds.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The family is working in the garden.', distractors:[T('Ka','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('rākau','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kai','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('tēpu','cat-noun')], translation:'The family ate their food at their table.', distractors:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('whakarite','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun'),T('māhana','cat-adj')], translation:'Mum is preparing the warm food.', distractors:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('ngā','cat-det'),T('makariri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('kākahu','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('rūma horoi','cat-noun')], translation:'The children washed their clothes in the laundry.', distractors:[T('Kei te','cat-tense'),T('kawe','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tino','cat-int'),T('māhana','cat-adj'),T('tō','cat-det'),T('mātou','cat-subj'),T('whare','cat-noun'),T('i','cat-loc'),T('tēnei','cat-det'),T('pō','cat-noun')], translation:'Our house is very warm tonight.', distractors:[T('Ka','cat-tense'),T('rawa','cat-int'),T('tō','cat-det'),T('makariri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('kuia','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kāinga','cat-noun')], translation:'The grandmother looked after the children at their home.', distractors:[T('Kei te','cat-tense'),T('manaaki','cat-verb'),T('te','cat-det'),T('koro','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('hanga','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('mea','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('waho','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun')], translation:'Dad is building a new thing outside the house.', distractors:[T('Ka','cat-tense'),T('peita','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakaaro','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('mātua','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kāinga','cat-noun')], translation:'The children thought about their parents at their home.', distractors:[T('Kei te','cat-tense'),T('mahara','cat-verb'),T('te','cat-det'),T('kaumātua','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('māhana','cat-adj'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('whare','cat-noun'),T('i','cat-loc'),T('tēnei','cat-det'),T('pō','cat-noun')], translation:'The warm family is sitting inside the house tonight.', distractors:[T('Ka','cat-tense'),T('moe','cat-verb'),T('ngā','cat-det'),T('makariri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('pai','cat-adj'),T('te','cat-det'),T('kai','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('te','cat-det'),T('whānau','cat-noun')], translation:'The food was very good and the family was happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('noho','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('tō','cat-det'),T('mātou','cat-subj'),T('kāinga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('manaaki','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ō','cat-det'),T('mātou','cat-subj'),T('manuhiri','cat-noun')], translation:'Therefore we stayed at our home and we welcomed our visitors.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('tiaki','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('katoa','cat-mod'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('māra','cat-noun'),T('i','cat-loc'),T('tēnei','cat-det'),T('ata','cat-noun')], translation:'The whole family worked in their garden this morning.', distractors:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('tonu','cat-mod')] },
+      { words:[T('Kei te','cat-tense'),T('peita','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('pakitara','cat-noun'),T('o te','cat-det'),T('whare','cat-noun'),T('hou','cat-adj')], translation:'Dad is painting the walls of the new house.', distractors:[T('Ka','cat-tense'),T('hanga','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('ka','cat-tense'),T('ngenge','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('whakarite','cat-verb'),T('tonu','cat-mod'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun')], translation:'Although she was tired, mum still prepared the food.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('ngā','cat-det'),T('māhana','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('ki','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kāinga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('kai','cat-verb'),T('rātou','cat-subj'),T('tahi','cat-mod')], translation:'The family returned home and they ate together.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('māhana','cat-adj'),T('tō','cat-det'),T('mātou','cat-subj'),T('kāinga','cat-noun'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('mātou','cat-subj'),T('i','cat-loc'),T('reira','cat-loc')], translation:'Our home is very warm, therefore we are happy there.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('makariri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('reka','cat-adj'),T('te','cat-det'),T('kai','cat-noun'),T('i','cat-loc'),T('tunua','cat-verb'),T('e','cat-det'),T('ia','cat-subj')], translation:'The food cooked by her was very delicious.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('ngā','cat-det'),T('haunga','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ki','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kāinga','cat-noun'),T('i','cat-loc'),T('muri','cat-loc'),T('i te','cat-loc'),T('kura','cat-noun')], translation:'Therefore the children returned home after school.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('wawe','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('manaaki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('māhana','cat-adj'),T('tō','cat-det'),T('rātou','cat-subj'),T('ngākau','cat-noun')], translation:'The family welcomed the visitors and their hearts were very warm.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('makariri','cat-adj')] },
+    ]
+  },
+  {
+    id: 'marae', name: 'Marae', eng: 'Marae', color: '#7a2db5', lightBg: '#ede7f6', darkBg: '#251840',
+    sentences: [
+      { words:[T('Ka','cat-tense'),T('tū','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')], translation:'The chief stood.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('kaumātua','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tae','cat-verb'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('marae','cat-noun')], translation:'The visitors are arriving at the marae.', distractors:[T('Ka','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('karanga','cat-verb'),T('ngā','cat-det'),T('wāhine','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('marae','cat-noun')], translation:'The women called at the marae.', distractors:[T('Kei te','cat-tense'),T('waiata','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('whaikōrero','cat-verb'),T('te','cat-det'),T('kaumātua','cat-noun'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('marae','cat-noun')], translation:'The elder is giving a speech in front of the marae.', distractors:[T('Ka','cat-tense'),T('waiata','cat-verb'),T('ngā','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('waiata','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('wharenui','cat-noun')], translation:'The people sang in the meeting house.', distractors:[T('Kei te','cat-tense'),T('kōrero','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('manaaki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('marae','cat-noun')], translation:'The family is welcoming the visitors at the marae.', distractors:[T('Ka','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('kaumātua','cat-noun'),T('i','cat-loc'),T('roto','cat-loc'),T('i te','cat-loc'),T('wharenui','cat-noun')], translation:'The elders sat inside the meeting house.', distractors:[T('Kei te','cat-tense'),T('tū','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('whakarite','cat-verb'),T('ngā','cat-det'),T('wāhine','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kai','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kāuta','cat-noun')], translation:'The women are preparing the food in the kitchen.', distractors:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tū','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun'),T('kaha','cat-adj'),T('ā','cat-conn'),T('ka','cat-tense'),T('kōrero','cat-verb'),T('ia','cat-subj'),T('mō','cat-conn'),T('tōna','cat-det'),T('iwi','cat-noun')], translation:'The strong chief stood and spoke about his tribe.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('ngoikore','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('karanga','cat-verb'),T('te','cat-det'),T('kuia','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('marae','cat-noun')], translation:'The elder woman is calling the visitors to the marae.', distractors:[T('Ka','cat-tense'),T('waiata','cat-verb'),T('te','cat-det'),T('rangatira','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('taumaha','cat-adj'),T('tōna','cat-det'),T('ngākau','cat-noun'),T('i','cat-loc'),T('tērā','cat-det'),T('rā','cat-noun')], translation:'His heart was very heavy that day.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('tōku','cat-det'),T('māmā','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('hui','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('katoa','cat-mod'),T('i','cat-loc'),T('te','cat-det'),T('marae','cat-noun')], translation:'Therefore all the people gathered at the marae.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('waiata','cat-verb'),T('te','cat-det'),T('rōpū','cat-noun'),T('ataahua','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('hui','cat-noun')], translation:'The beautiful group sang in front of the gathering.', distractors:[T('Kei te','cat-tense'),T('whaikōrero','cat-verb'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('rangatira','cat-noun'),T('i','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('taonga','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('wharenui','cat-noun')], translation:'The chiefs are guarding their treasures in the meeting house.', distractors:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('kaumātua','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('roimata','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('mārika','cat-int'),T('pōuri','cat-adj'),T('ngā','cat-det'),T('tāngata','cat-noun')], translation:'The tears fell and the people were deeply sad.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tino','cat-int')] },
+      { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('tangata','cat-noun'),T('iti','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('tū','cat-verb'),T('ia','cat-subj'),T('māia','cat-adj'),T('i','cat-loc'),T('mua','cat-loc'),T('i te','cat-loc'),T('iwi','cat-noun')], translation:'Although she was a small person, she stood confidently before the tribe.', distractors:[T('Kei te','cat-tense'),T('nō reira','cat-conn'),T('mātou','cat-subj'),T('nui','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('nō','cat-conn'),T('ngā','cat-det'),T('wāhi','cat-noun'),T('katoa','cat-mod'),T('ki','cat-loc'),T('te','cat-det'),T('hui','cat-noun')], translation:'Visitors from all places came to the gathering.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('whakaaro','cat-verb'),T('mātou','cat-subj'),T('mō','cat-conn'),T('ō','cat-det'),T('mātou','cat-subj'),T('tīpuna','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('māhana','cat-adj'),T('ō','cat-det'),T('mātou','cat-subj'),T('ngākau','cat-noun')], translation:'Therefore we thought about our ancestors and our hearts were very warm.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('makariri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('rangatira','cat-adj'),T('te','cat-det'),T('hui','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('ki','cat-loc'),T('ō','cat-det'),T('rātou','cat-noun'),T('kāinga','cat-noun')], translation:'The gathering was very chiefly and the visitors returned to their homes.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('rongonui','cat-adj'),T('tōna','cat-det'),T('whaikōrero','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tangi','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('katoa','cat-mod')], translation:'His speech was very renowned and all the people wept.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakaaro','cat-verb'),T('ia','cat-subj'),T('mō','cat-conn'),T('tōna','cat-det'),T('marae','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('māia','cat-adj'),T('tona','cat-det'),T('ngākau','cat-noun')], translation:'He thought about his marae and his heart was courageous.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('mataku','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tū','cat-verb'),T('ngā','cat-det'),T('rangatira','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('manaaki','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('manuhiri','cat-noun')], translation:'Therefore all the chiefs stood and they welcomed the visitors.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tiaki','cat-verb')] },
+    ]
+  },
+  {
+    id: 'kai', name: 'Kai', eng: 'Food', color: '#b8860b', lightBg: '#fef3cd', darkBg: '#3a2e00',
+    sentences: [
+      { words:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun')], translation:'The child is eating.', distractors:[T('Ka','cat-tense'),T('inu','cat-verb'),T('ngā','cat-det'),T('māmā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('ika','cat-noun')], translation:'Mum cooked the fish.', distractors:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('ngā','cat-det'),T('kūmara','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('inu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('miraka','cat-noun')], translation:'The child is drinking the milk.', distractors:[T('Ka','cat-tense'),T('kai','cat-verb'),T('ngā','cat-det'),T('wai','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('huawhenua','cat-noun'),T('hou','cat-adj')], translation:'The family ate the fresh vegetables.', distractors:[T('Kei te','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('āporo','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'Mum is looking for a fresh apple at the shop.', distractors:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('reka','cat-adj'),T('tino','cat-int'),T('te','cat-det'),T('ika','cat-noun'),T('i','cat-loc'),T('tunua','cat-verb'),T('i','cat-loc'),T('te','cat-det'),T('ahi','cat-noun')], translation:'The fish cooked on the fire was very delicious.', distractors:[T('Kei te','cat-tense'),T('haunga','cat-adj'),T('rawa','cat-int'),T('māmā','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tapahi','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('huawhenua','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kīhini','cat-noun')], translation:'Dad is cutting the vegetables in the kitchen.', distractors:[T('Ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kai','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'Mum bought the fresh food at the shop.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('tino','cat-int'),T('māui','cat-adj'),T('te','cat-det'),T('rīwai','cat-noun'),T('i','cat-loc'),T('tēnei','cat-det'),T('māra','cat-noun')], translation:'The potatoes in this garden are very tasty.', distractors:[T('Ka','cat-tense'),T('rawa','cat-int'),T('ngā','cat-det'),T('haunga','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakarite','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('hākari','cat-noun'),T('nui','cat-adj'),T('mō','cat-conn'),T('ngā','cat-det'),T('manuhiri','cat-noun')], translation:'The family prepared a big feast for the visitors.', distractors:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('horoi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('rīwai','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kīhini','cat-noun')], translation:'The children are washing the potatoes in the kitchen.', distractors:[T('Ka','cat-tense'),T('tapahi','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('kawe','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('kete','cat-noun'),T('kai','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('tēpu','cat-noun')], translation:'The child carried the food basket to the table.', distractors:[T('Kei te','cat-tense'),T('tango','cat-verb'),T('ngā','cat-det'),T('māmā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('nui','cat-adj'),T('te','cat-det'),T('hākari','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('kai','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('katoa','cat-mod')], translation:'The feast was very big and all the people ate.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('iti','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('tunu','cat-verb'),T('ia','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('ika','cat-noun'),T('hou','cat-adj'),T('ā','cat-conn'),T('ka','cat-tense'),T('reka','cat-adj'),T('rawa','cat-int'),T('atu','cat-mod')], translation:'Therefore she cooked the fresh fish and it was very delicious.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('haunga','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hopu','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('ika','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tunu','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('ērā','cat-det')], translation:'Dad caught the fish and mum cooked them.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('ngā','cat-det'),T('kūmara','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('mea','cat-noun'),T('reka','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The child is looking for something delicious at the shop.', distractors:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('ngā','cat-det'),T('haunga','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whakarite','cat-verb'),T('ngā','cat-det'),T('wāhine','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('hākari','cat-noun'),T('nui','cat-adj'),T('mō','cat-conn'),T('te','cat-det'),T('hui','cat-noun')], translation:'The women prepared the big feast for the gathering.', distractors:[T('Kei te','cat-tense'),T('kai','cat-verb'),T('te','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('kai','cat-noun'),T('hou','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('tino','cat-int'),T('reka','cat-adj'),T('ia','cat-subj')], translation:'Although it was a new food, it was very delicious.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('haunga','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('kai','cat-verb'),T('tahi','cat-mod'),T('te','cat-det'),T('whānau','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('harikoa','cat-adj'),T('rātou','cat-subj')], translation:'The family ate together and they were very happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('ngā','cat-det'),T('anake','cat-mod')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('whakarite','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('he','cat-det'),T('hākari','cat-noun'),T('nui','cat-adj'),T('mō','cat-conn'),T('ō','cat-det'),T('mātou','cat-subj'),T('manuhiri','cat-noun')], translation:'Therefore we prepared a big feast for our visitors.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('iti','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('reka','cat-adj'),T('ngā','cat-det'),T('kai','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('ngā','cat-det'),T('tāngata','cat-noun')], translation:'All the foods were very delicious and the people were happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('haunga','cat-adj')] },
+    ]
+  },
+  {
+    id: 'toa', name: 'Toa', eng: 'Shop', color: '#666', lightBg: '#f0f0f0', darkBg: '#303030',
+    sentences: [
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('māmā','cat-noun')], translation:'Mum bought something.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('āporo','cat-noun')], translation:'Mum is buying an apple.', distractors:[T('Ka','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('rīwai','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('rapu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('mea','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The child looked for a new thing at the shop.', distractors:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The family is going to the shop.', distractors:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('tāna','cat-det'),T('motokā','cat-noun'),T('hou','cat-adj')], translation:'Dad bought his new car.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('kawe','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('tāna','cat-det'),T('pēke','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'Mum is carrying her bag to the shop.', distractors:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('nui','cat-adj'),T('ngā','cat-det'),T('mea','cat-noun'),T('i','cat-loc'),T('tēnā','cat-det'),T('toa','cat-noun')], translation:'There were very many things at that shop.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('te','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('āporo','cat-noun'),T('hou','cat-adj'),T('me','cat-conn'),T('he','cat-det'),T('miraka','cat-noun')], translation:'The child bought a fresh apple and milk.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('tango','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('huawhenua','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'Mum is taking the fresh vegetables from the shop.', distractors:[T('Ka','cat-tense'),T('kawe','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('rapu','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('mea','cat-noun'),T('māmā','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The child looked for cheap things at the shop.', distractors:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('ngā','cat-det'),T('taumaha','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('whakaaro','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('mō','cat-conn'),T('ngā','cat-det'),T('mea','cat-noun'),T('e','cat-det'),T('hiahia','cat-verb'),T('ana','cat-tense'),T('ia','cat-subj')], translation:'Mum is thinking about the things she wants.', distractors:[T('Ka','cat-tense'),T('mahara','cat-verb'),T('ngā','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('taonga','cat-noun'),T('ataahua','cat-adj'),T('mō','cat-conn'),T('tōna','cat-det'),T('hoa','cat-noun')], translation:'Dad bought a beautiful gift for his friend.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('māmā','cat-adj'),T('tōna','cat-det'),T('pēke','cat-noun'),T('nō reira','cat-conn'),T('ka','cat-tense'),T('haere','cat-verb'),T('ia','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'Her bag was very light, therefore she went to the shop.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('taumaha','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('hoko','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('kai','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('hoki','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('tō','cat-det'),T('mātou','cat-subj'),T('kāinga','cat-noun')], translation:'Therefore we bought all the food and we returned home.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('kite','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('he','cat-det'),T('kēmu','cat-noun'),T('hou','cat-adj'),T('ā','cat-conn'),T('ka','cat-tense'),T('hiahia','cat-verb'),T('ia','cat-subj'),T('ki','cat-loc'),T('tērā','cat-det')], translation:'The child saw a new game and they wanted it.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('tawhito','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('mea','cat-noun'),T('uaua','cat-adj'),T('te','cat-det'),T('rapu','cat-noun'),T('ka','cat-tense'),T('kite','cat-verb'),T('tonu','cat-mod'),T('ia','cat-subj')], translation:'Although it was difficult to find, she still found it.', distractors:[T('Kei te','cat-tense'),T('nō reira','cat-conn'),T('mātou','cat-subj'),T('māmā','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hoko','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('taonga','cat-noun'),T('ataahua','cat-adj'),T('mō','cat-conn'),T('ō','cat-det'),T('rātou','cat-noun'),T('hoa','cat-noun')], translation:'The family bought beautiful gifts for their friends.', distractors:[T('Kei te','cat-tense'),T('rapu','cat-verb'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('hoko','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('kai','cat-noun'),T('hou','cat-adj'),T('ā','cat-conn'),T('kei te','cat-tense'),T('kawe','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ērā','cat-det'),T('ki','cat-loc'),T('tō','cat-det'),T('mātou','cat-subj'),T('kāinga','cat-noun')], translation:'We are buying the fresh food and we are taking them home.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('nui','cat-adj'),T('ngā','cat-det'),T('mea','cat-noun'),T('pai','cat-adj'),T('i','cat-loc'),T('tērā','cat-det'),T('toa','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('mātou','cat-subj')], translation:'There were very many good things at that shop and we were happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('ngā','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('hoko','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ō','cat-det'),T('mātou','cat-subj'),T('mea','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('hoki','cat-verb'),T('mātou','cat-subj'),T('harikoa','cat-adj')], translation:'Therefore we bought all our things and we returned happily.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('anake','cat-mod')] },
+    ]
+  },
+  {
+    id: 'pamu', name: 'Pāmu', eng: 'Farm', color: '#6b7a2d', lightBg: '#f0f4e0', darkBg: '#252a10',
+    sentences: [
+      { words:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('kau','cat-noun')], translation:'The cows rested.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('hipi','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('kākano','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The seeds are growing in the garden.', distractors:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('te','cat-det'),T('tipu','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('whāngai','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('hipi','cat-noun')], translation:'Dad fed the sheep.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('kau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('eke','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('tōna','cat-det'),T('hoiho','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pāmu','cat-noun')], translation:'The child is riding their horse on the farm.', distractors:[T('Ka','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('pōaka','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('tāngata','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kararehe','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pāmu','cat-noun')], translation:'The people cared for the animals on the farm.', distractors:[T('Kei te','cat-tense'),T('whāngai','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('kohi','cat-verb'),T('te','cat-det'),T('māmā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('hua','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'Mum is gathering fresh fruit from the garden.', distractors:[T('Ka','cat-tense'),T('whakatō','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('hipi','cat-noun'),T('i','cat-loc'),T('waho','cat-loc'),T('i te','cat-loc'),T('māra','cat-noun')], translation:'The sheep ran outside the garden.', distractors:[T('Kei te','cat-tense'),T('noho','cat-verb'),T('te','cat-det'),T('kau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('whakatō','cat-verb'),T('te','cat-det'),T('kaiako','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun'),T('hou','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('māra','cat-noun')], translation:'The teacher is planting the new seeds in the garden.', distractors:[T('Ka','cat-tense'),T('kohi','cat-verb'),T('ngā','cat-det'),T('tawhito','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('nui','cat-adj'),T('ngā','cat-det'),T('kararehe','cat-noun'),T('i','cat-loc'),T('tērā','cat-det'),T('pāmu','cat-noun')], translation:'There were very many animals on that farm.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('te','cat-det'),T('iti','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('kurī','cat-noun'),T('ki','cat-loc'),T('ngā','cat-det'),T('hipi','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pāmu','cat-noun')], translation:'The dog ran to the sheep on the farm.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('kau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('tipu','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun'),T('pai','cat-adj'),T('i','cat-loc'),T('tēnei','cat-det'),T('māra','cat-noun')], translation:'The good plants are growing in this garden.', distractors:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('te','cat-det'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('whāngai','cat-verb'),T('te','cat-det'),T('pāpā','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kararehe','cat-noun'),T('katoa','cat-mod'),T('i','cat-loc'),T('te','cat-det'),T('ata','cat-noun')], translation:'Dad fed all the animals in the morning.', distractors:[T('Kei te','cat-tense'),T('tiaki','cat-verb'),T('ngā','cat-det'),T('anake','cat-mod')] },
+      { words:[T('Kei te','cat-tense'),T('mahi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('pukumahi','cat-adj'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('pāmu','cat-noun')], translation:'The hardworking family is working on their farm.', distractors:[T('Ka','cat-tense'),T('noho','cat-verb'),T('ngā','cat-det'),T('mārie','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tiaki','cat-verb'),T('te','cat-det'),T('kaimahi','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('kau','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('ia','cat-subj')], translation:'The worker looked after the cows and he was happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('pōuri','cat-adj')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('whakatō','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ngā','cat-det'),T('kākano','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tiaki','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('ērā','cat-det')], translation:'Therefore we planted the seeds and we tended to them.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('kohi','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('pai','cat-adj'),T('ngā','cat-det'),T('kararehe','cat-noun'),T('i','cat-loc'),T('tērā','cat-det'),T('pāmu','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('harikoa','cat-adj'),T('ngā','cat-det'),T('tāngata','cat-noun')], translation:'The animals at that farm were very good and the people were happy.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+      { words:[T('Ahakoa','cat-conn'),T('ka','cat-tense'),T('ngenge','cat-adj'),T('ia','cat-subj'),T('ka','cat-tense'),T('mahi','cat-verb'),T('tonu','cat-mod'),T('ia','cat-subj'),T('i','cat-loc'),T('tōna','cat-det'),T('pāmu','cat-noun')], translation:'Although he was tired, he kept working on his farm.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('wawe','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('puāwai','cat-verb'),T('ngā','cat-det'),T('tipu','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('ataahua','cat-adj'),T('te','cat-det'),T('māra','cat-noun')], translation:'All the plants bloomed and the garden was very beautiful.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('kino','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('kohi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('ngā','cat-det'),T('hua','cat-noun'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('hoko','cat-verb'),T('rātou','cat-subj'),T('i','cat-loc'),T('ērā','cat-det'),T('i','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The family gathered all the fruit and they sold them at the shop.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('mahi','cat-verb'),T('mātou','cat-subj'),T('tahi','cat-mod'),T('i','cat-loc'),T('tō','cat-det'),T('mātou','cat-subj'),T('pāmu','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('harikoa','cat-adj'),T('mātou','cat-subj')], translation:'Therefore we worked together on our farm and we were very happy.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('anake','cat-mod')] },
+    ]
+  },
+  {
+    id: 'haerenga', name: 'Haerenga', eng: 'Journey', color: '#2d3a7a', lightBg: '#d0d8f7', darkBg: '#141a40',
+    sentences: [
+      { words:[T('Ka','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')], translation:'The family went.', distractors:[T('Kei te','cat-tense'),T('hoki','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('eke','cat-verb'),T('te','cat-det'),T('tamaiti','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('pahi','cat-noun')], translation:'The child is getting on the bus.', distractors:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('motokā','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('ngā','cat-det'),T('manuhiri','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('tāone','cat-noun')], translation:'The visitors arrived in town.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('hīkoi','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('tātahi','cat-noun')], translation:'The family is walking on the beach.', distractors:[T('Ka','cat-tense'),T('oma','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The children went to the sea.', distractors:[T('Kei te','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('eke','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('waka','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('moana','cat-noun')], translation:'The family is sailing their boat on the sea.', distractors:[T('Ka','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('roa','cat-adj'),T('te','cat-det'),T('haerenga','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('tāone','cat-noun')], translation:'The journey to town was very long.', distractors:[T('Kei te','cat-tense'),T('rawa','cat-int'),T('ngā','cat-det'),T('poto','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('ki','cat-loc'),T('tō','cat-det'),T('rātou','cat-subj'),T('kāinga','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('ahiahi','cat-noun')], translation:'The family returned home in the afternoon.', distractors:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun')] },
+      { words:[T('Kei te','cat-tense'),T('haere','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('maunga','cat-noun'),T('nui','cat-adj')], translation:'We are going to the big mountain.', distractors:[T('Ka','cat-tense'),T('hoki','cat-verb'),T('rātou','cat-subj'),T('iti','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('hīkoi','cat-verb'),T('ngā','cat-det'),T('tamariki','cat-noun'),T('harikoa','cat-adj'),T('ki','cat-loc'),T('te','cat-det'),T('ngahere','cat-noun')], translation:'The happy children walked to the bush.', distractors:[T('Kei te','cat-tense'),T('oma','cat-verb'),T('te','cat-det'),T('pōuri','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('piki','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('māia','cat-adj'),T('i','cat-loc'),T('te','cat-det'),T('maunga','cat-noun'),T('teitei','cat-adj')], translation:'The brave family climbed the tall mountain.', distractors:[T('Kei te','cat-tense'),T('heke','cat-verb'),T('ngā','cat-det'),T('mataku','cat-adj')] },
+      { words:[T('Kei te','cat-tense'),T('kauhoe','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('i','cat-loc'),T('te','cat-det'),T('awa','cat-noun'),T('māmā','cat-adj')], translation:'The family is swimming in the clear river.', distractors:[T('Ka','cat-tense'),T('hīkoi','cat-verb'),T('ngā','cat-det'),T('hōhonu','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('tae','cat-verb'),T('te','cat-det'),T('whānau','cat-noun'),T('ki','cat-loc'),T('te','cat-det'),T('tāone','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('haere','cat-verb'),T('rātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('toa','cat-noun')], translation:'The family arrived in town and they went to the shop.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('hoki','cat-verb')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('haere','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('moana','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('kauhoe','cat-verb'),T('mātou','cat-subj')], translation:'Therefore we went to the sea and we swam.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('hīkoi','cat-verb')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('roa','cat-adj'),T('te','cat-det'),T('ara','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('ngenge','cat-adj'),T('ngā','cat-det'),T('tamariki','cat-noun')], translation:'The path was very long and the children were tired.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('poto','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('piki','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('maunga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('kite','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('ao','cat-noun'),T('katoa','cat-mod')], translation:'We climbed the mountain and we saw the whole world.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('heke','cat-verb')] },
+      { words:[T('Ahakoa','cat-conn'),T('he','cat-det'),T('haerenga','cat-noun'),T('roa','cat-adj'),T('ka','cat-tense'),T('tae','cat-verb'),T('tonu','cat-mod'),T('mātou','cat-subj'),T('ki','cat-loc'),T('reira','cat-loc')], translation:'Although it was a long journey, we still arrived there.', distractors:[T('Kei te','cat-tense'),T('nō reira','cat-conn'),T('ngā','cat-det'),T('poto','cat-adj')] },
+      { words:[T('Ka','cat-tense'),T('heke','cat-verb'),T('mātou','cat-subj'),T('i','cat-loc'),T('te','cat-det'),T('maunga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('tae','cat-verb'),T('mātou','cat-subj'),T('ki','cat-loc'),T('te','cat-det'),T('awa','cat-noun'),T('wawe','cat-mod')], translation:'We came down the mountain and quickly arrived at the river.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('tonu','cat-mod')] },
+      { words:[T('Nō reira','cat-conn'),T('ka','cat-tense'),T('haere','cat-verb'),T('tātou','cat-subj'),T('katoa','cat-mod'),T('ā','cat-conn'),T('ka','cat-tense'),T('tino','cat-int'),T('pai','cat-adj'),T('te','cat-det'),T('haerenga','cat-noun')], translation:'Therefore we all went and the journey was very good.', distractors:[T('Ka','cat-tense'),T('engari','cat-conn'),T('mātou','cat-subj'),T('anake','cat-mod')] },
+      { words:[T('Ka','cat-tense'),T('tino','cat-int'),T('ataahua','cat-adj'),T('ngā','cat-det'),T('wāhi','cat-noun'),T('katoa','cat-mod'),T('i','cat-loc'),T('tō','cat-det'),T('mātou','cat-subj'),T('haerenga','cat-noun'),T('ā','cat-conn'),T('ka','cat-tense'),T('mahara','cat-verb'),T('tonu','cat-mod'),T('mātou','cat-subj'),T('ki','cat-loc'),T('ērā','cat-det')], translation:'All the places on our journey were very beautiful and we still remember them.', distractors:[T('Kei te','cat-tense'),T('engari','cat-conn'),T('rātou','cat-subj'),T('kino','cat-adj')] },
+    ]
+  }
+];
+
+const LEVEL_DATA = {
+  tipu:       { name: 'Tipu',       eng: 'Emerging',   years: 'Tau 1–2', color: '#2d9a6a', sentences: TIPU_SENTENCES,       structure: 'Tohu wā + Kupu Mahi + Kupu Tohu + Kupu Ingoa' },
+  whakatipu:  { name: 'Whakatipu', eng: 'Developing',  years: 'Tau 3–4', color: '#2d6ab5', sentences: WHAKATIPU_SENTENCES,  structure: 'Tohu wā + Kupu Mahi + Kupu Tohu + Kupu Ingoa + i + Kupu Tohu + Kupu Ingoa' },
+  pakari:     { name: 'Pakari',     eng: 'Proficient',  years: 'Tau 5–6', color: '#b52d7a', sentences: PAKARI_SENTENCES,     structure: '... + Kupu Āhua + Kupu Tūhono Wāhi' },
+  matatau:    { name: 'Matatau',    eng: 'Mastery',     years: 'Tau 7–8', color: '#7a2db5', sentences: MATATAU_SENTENCES,    structure: 'Rerenga māmā me ngā Kupu Tūhono' },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let lState = { level:'tipu', qIdx:0, placed:[], score:0, total:0, streak:0, phase:'intro', checked:false, queue:[] };
+let kState = { kaupapa:null, qIdx:0, placed:[], score:0, total:0, streak:0, phase:'pick', checked:false, queue:[] };
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function makeTileHTML(word, idx, placed, usedSet, isPool) {
+  const used = isPool && usedSet.has(idx);
+  const hint = word._hint;
+  return `<span class="tile ${word.c}${used?' used':''}${hint?' hint-highlight':''}"
+    onclick="${isPool ? `poolClick(${idx})` : `placedClick(${idx})`}"
+    title="${CAT_LABELS[word.c]||''}"
+  >${word.w}</span>`;
+}
+function getPool(sentence) {
+  return shuffle([...sentence.words.map((w,i)=>({...w,_origIdx:i})), ...sentence.distractors.map((w,i)=>({...w,_origIdx:1000+i}))]);
+}
+function correctSentence(sentence) {
+  return sentence.words.map(w=>w.w).join(' ');
+}
+function getCategories(sentence) {
+  const cats = [...new Set(sentence.words.map(w=>w.c))];
+  return cats;
+}
+function starsFor(pct) {
+  if (pct >= 80) return '★★★';
+  if (pct >= 50) return '★★☆';
+  return '★☆☆';
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (tab==='levels') renderLevels();
+  if (tab==='topics') renderTopics();
+}
+
+// ─── LEVELS TAB ──────────────────────────────────────────────────────────────
+function selectLevel(levelId) {
+  lState = { level:levelId, qIdx:0, placed:[], score:0, total:0, streak:0, phase:'intro', checked:false, queue:[] };
+  document.querySelectorAll('.level-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector(`.level-chip[data-level="${levelId}"]`).classList.add('active');
+  renderLevels();
+}
+function renderLevels() {
+  const content = document.getElementById('levels-content');
+  const ld = LEVEL_DATA[lState.level];
+  if (lState.phase === 'intro') {
+    content.innerHTML = `
+    <div class="intro-screen">
+      <span class="intro-badge" style="background:${ld.color}">${ld.eng}</span>
+      <h2>${ld.name} — ${ld.years}</h2>
+      <p class="subtitle">${ld.sentences.length} sentences</p>
+      <div class="structure-box">
+        <strong>Hanganga — Structure</strong>
+        ${ld.structure}
+      </div>
+      <button class="btn btn-start btn-primary" onclick="startLevel()">Tīmata — Start</button>
+    </div>`;
+  } else if (lState.phase === 'game') {
+    renderLevelGame(content, ld);
+  } else {
+    renderLevelComplete(content, ld);
+  }
+}
+function startLevel() {
+  const ld = LEVEL_DATA[lState.level];
+  lState.queue = shuffle([...Array(ld.sentences.length).keys()]);
+  lState.qIdx = 0; lState.placed = []; lState.score = 0; lState.total = 0;
+  lState.streak = 0; lState.phase = 'game'; lState.checked = false;
+  lState._pool = getPool(ld.sentences[lState.queue[lState.qIdx]]);
+  lState._usedSet = new Set();
+  renderLevels();
+}
+function renderLevelGame(container, ld) {
+  const si = lState.queue[lState.qIdx];
+  const sentence = ld.sentences[si];
+  const total = ld.sentences.length;
+  const pct = Math.round((lState.qIdx/total)*100);
+  const cats = getCategories(sentence);
+  const correct = lState.checked ? isCorrect(sentence) : null;
+
+  container.innerHTML = `
+  <div class="game-area">
+    <div class="progress-row">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%;background:${ld.color}"></div></div>
+      <span class="score-pill">${lState.score} / ${lState.qIdx} tika</span>
+      <span class="score-pill">Raupeka: ${lState.streak}</span>
+    </div>
+    <div class="question-panel">
+      <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
+      <div class="question-text">${sentence.translation}</div>
+    </div>
+    <div class="drop-zone-label">Tō rerenga — Your sentence</div>
+    <div class="drop-zone${lState.placed.length>0?' has-tiles':''}" id="drop-zone">
+      ${lState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : lState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="lPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+    </div>
+    ${lState.checked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
+      <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
+      <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
+    </div>` : ''}
+    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
+    <div class="tile-pool" id="tile-pool">
+      ${lState._pool.map((w,i)=>makeTileHTML(w,i,lState.placed,lState._usedSet,true)).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-check" onclick="lCheck()" ${lState.checked||lState.placed.length===0?'disabled':''}>Tūtohu — Check</button>
+      <button class="btn btn-secondary" onclick="lClear()">Ūkui — Clear</button>
+      <button class="btn btn-hint" onclick="lHint()">Āwhina — Hint</button>
+      ${lState.checked ? `<button class="btn btn-next" onclick="lNext()">→ Panuku</button>` : ''}
+    </div>
+  </div>`;
+}
+function renderLevelComplete(container, ld) {
+  const pct = Math.round((lState.score/ld.sentences.length)*100);
+  const stars = starsFor(pct);
+  const levels = Object.keys(LEVEL_DATA);
+  const nextIdx = levels.indexOf(lState.level)+1;
+  const nextLevel = levels[nextIdx];
+  container.innerHTML = `
+  <div class="complete-screen">
+    <div class="stars">${stars}</div>
+    <div class="complete-score">${pct}%</div>
+    <div class="complete-label">${lState.score} / ${ld.sentences.length} tika</div>
+    <div class="complete-title">${ld.name} — ${ld.eng}</div>
+    <div class="complete-subtitle">Kua oti! Well done!</div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-secondary" onclick="startLevel()">↩ Anō — Try again</button>
+      ${nextLevel ? `<button class="btn btn-next" onclick="selectLevel('${nextLevel}')">Taumata hou →</button>` : ''}
+    </div>
+  </div>`;
+}
+function lPoolClick(idx) { if (lState.checked) return; const w = lState._pool[idx]; lState._usedSet.add(idx); lState.placed.push({...w}); renderLevels(); }
+function lPlacedClick(i) { if (lState.checked) return; const w = lState.placed[i]; lState.placed.splice(i,1); const pidx = lState._pool.findIndex((p,pi)=>!lState._usedSet.has(pi)?false:p.w===w.w&&p.c===w.c); if (pidx>=0) lState._usedSet.delete(pidx); renderLevels(); }
+function lCheck() {
+  const ld = LEVEL_DATA[lState.level];
+  const sentence = ld.sentences[lState.queue[lState.qIdx]];
+  lState.checked = true;
+  const ok = isCorrect(sentence);
+  if (ok) { lState.score++; lState.streak++; showCelebration(); } else { lState.streak=0; }
+  lState.total++;
+  renderLevels();
+}
+function lNext() {
+  lState.qIdx++;
+  const total = LEVEL_DATA[lState.level].sentences.length;
+  if (lState.qIdx >= total) { lState.phase='complete'; renderLevels(); return; }
+  lState.placed=[]; lState.checked=false;
+  lState._pool = getPool(LEVEL_DATA[lState.level].sentences[lState.queue[lState.qIdx]]);
+  lState._usedSet = new Set();
+  renderLevels();
+}
+function lClear() { lState.placed=[]; lState._usedSet=new Set(); renderLevels(); }
+function lHint() {
+  const ld = LEVEL_DATA[lState.level];
+  const sentence = ld.sentences[lState.queue[lState.qIdx]];
+  const nextWord = sentence.words[lState.placed.length];
+  if (!nextWord) return;
+  lState._pool.forEach(w=>w._hint=false);
+  const pidx = lState._pool.findIndex((p,pi)=>!lState._usedSet.has(pi)&&p.w===nextWord.w&&p.c===nextWord.c);
+  if (pidx>=0) lState._pool[pidx]._hint=true;
+  renderLevels();
+}
+function isCorrect(sentence) {
+  if (lState.placed.length !== sentence.words.length) return false;
+  return sentence.words.every((w,i)=>lState.placed[i]&&lState.placed[i].w===w.w&&lState.placed[i].c===w.c);
+}
+
+// Expose pool click via global (needed for onclick in innerHTML)
+window.poolClick = function(idx) { lPoolClick(idx); };
+
+// ─── TOPICS TAB ──────────────────────────────────────────────────────────────
+function renderTopics() {
+  const content = document.getElementById('topics-content');
+  if (kState.phase === 'pick') {
+    content.innerHTML = `<div class="topic-grid">${TOPICS.map(t=>`
+      <div class="topic-card" style="background:${t.lightBg};border-color:${t.color};color:${t.color}" onclick="selectTopic('${t.id}')">
+        <div class="topic-name">${t.name}</div>
+        <div class="topic-eng">${t.eng}</div>
+        <div class="topic-count">${t.sentences.length} rerenga</div>
+      </div>`).join('')}</div>`;
+  } else if (kState.phase === 'game') {
+    renderTopicGame(content);
+  } else {
+    renderTopicComplete(content);
+  }
+}
+function selectTopic(id) {
+  const topic = TOPICS.find(t=>t.id===id);
+  kState = { kaupapa:id, qIdx:0, placed:[], score:0, total:0, streak:0, phase:'game', checked:false,
+    queue: shuffle([...Array(topic.sentences.length).keys()]) };
+  kState._pool = getPool(topic.sentences[kState.queue[0]]);
+  kState._usedSet = new Set();
+  renderTopics();
+}
+function renderTopicGame(container) {
+  const topic = TOPICS.find(t=>t.id===kState.kaupapa);
+  const si = kState.queue[kState.qIdx];
+  const sentence = topic.sentences[si];
+  const total = topic.sentences.length;
+  const pct = Math.round((kState.qIdx/total)*100);
+  const cats = getCategories(sentence);
+  const correct = kState.checked ? isKCorrect(sentence) : null;
+
+  container.innerHTML = `
+  <button class="back-btn" onclick="backToTopics()">← Ngā Kaupapa</button>
+  <div class="game-area">
+    <div class="progress-row">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%;background:${topic.color}"></div></div>
+      <span class="score-pill">${kState.score} / ${kState.qIdx} tika</span>
+      <span class="score-pill">Raupeka: ${kState.streak}</span>
+    </div>
+    <div class="question-panel">
+      <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
+      <div class="question-text">${sentence.translation}</div>
+    </div>
+    <div class="drop-zone-label">Tō rerenga — Your sentence</div>
+    <div class="drop-zone${kState.placed.length>0?' has-tiles':''}" id="kdrop-zone">
+      ${kState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : kState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="kPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+    </div>
+    ${kState.checked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
+      <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
+      <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
+    </div>` : ''}
+    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
+    <div class="tile-pool" id="ktile-pool">
+      ${kState._pool.map((w,i)=>{
+        const used = kState._usedSet.has(i);
+        const hint = w._hint;
+        return `<span class="tile ${w.c}${used?' used':''}${hint?' hint-highlight':''}" onclick="kPoolClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`;
+      }).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="kCheck()" ${kState.checked||kState.placed.length===0?'disabled':''}>Tūtohu — Check</button>
+      <button class="btn btn-secondary" onclick="kClear()">Ūkui — Clear</button>
+      <button class="btn btn-hint" onclick="kHint()">Āwhina — Hint</button>
+      ${kState.checked ? `<button class="btn btn-next" onclick="kNext()">→ Panuku</button>` : ''}
+    </div>
+  </div>`;
+}
+function renderTopicComplete(container) {
+  const topic = TOPICS.find(t=>t.id===kState.kaupapa);
+  const pct = Math.round((kState.score/topic.sentences.length)*100);
+  const stars = starsFor(pct);
+  container.innerHTML = `
+  <button class="back-btn" onclick="backToTopics()">← Ngā Kaupapa</button>
+  <div class="complete-screen">
+    <div class="stars">${stars}</div>
+    <div class="complete-score">${pct}%</div>
+    <div class="complete-label">${kState.score} / ${topic.sentences.length} tika</div>
+    <div class="complete-title">${topic.name} — ${topic.eng}</div>
+    <div class="complete-subtitle">Kua oti! Well done!</div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-secondary" onclick="selectTopic('${topic.id}')">↩ Anō — Try again</button>
+      <button class="btn btn-next" onclick="backToTopics()">Ngā Kaupapa →</button>
+    </div>
+  </div>`;
+}
+function backToTopics() { kState.phase='pick'; renderTopics(); }
+function kPoolClick(idx) { if (kState.checked) return; const w = kState._pool[idx]; kState._usedSet.add(idx); kState.placed.push({...w}); renderTopics(); }
+function kPlacedClick(i) {
+  if (kState.checked) return;
+  const w = kState.placed[i]; kState.placed.splice(i,1);
+  const pidx = [...kState._usedSet].find(pi=>kState._pool[pi]&&kState._pool[pi].w===w.w&&kState._pool[pi].c===w.c);
+  if (pidx!==undefined) kState._usedSet.delete(pidx);
+  renderTopics();
+}
+function isKCorrect(sentence) {
+  if (kState.placed.length !== sentence.words.length) return false;
+  return sentence.words.every((w,i)=>kState.placed[i]&&kState.placed[i].w===w.w&&kState.placed[i].c===w.c);
+}
+function kCheck() {
+  const topicObj = TOPICS.find(t=>t.id===kState.kaupapa);
+  const sentence = topicObj.sentences[kState.queue[kState.qIdx]];
+  kState.checked=true;
+  const ok=isKCorrect(sentence);
+  if(ok){kState.score++;kState.streak++;showCelebration();}else{kState.streak=0;}
+  kState.total++;
+  renderTopics();
+}
+function kNext() {
+  kState.qIdx++;
+  const topic = TOPICS.find(t=>t.id===kState.kaupapa);
+  if (kState.qIdx >= topic.sentences.length) { kState.phase='kcomplete'; renderTopics(); return; }
+  kState.placed=[]; kState.checked=false;
+  kState._pool = getPool(topic.sentences[kState.queue[kState.qIdx]]);
+  kState._usedSet = new Set();
+  renderTopics();
+}
+function kClear() { kState.placed=[]; kState._usedSet=new Set(); renderTopics(); }
+function kHint() {
+  const topic = TOPICS.find(t=>t.id===kState.kaupapa);
+  const sentence = topic.sentences[kState.queue[kState.qIdx]];
+  const nextWord = sentence.words[kState.placed.length];
+  if (!nextWord) return;
+  kState._pool.forEach(w=>w._hint=false);
+  const pidx = kState._pool.findIndex((p,pi)=>!kState._usedSet.has(pi)&&p.w===nextWord.w&&p.c===nextWord.c);
+  if (pidx>=0) kState._pool[pidx]._hint=true;
+  renderTopics();
+}
+
+// Handle phase name for topics complete screen
+function renderTopics() {
+  const content = document.getElementById('topics-content');
+  if (kState.phase === 'pick') {
+    content.innerHTML = `<div class="topic-grid">${TOPICS.map(t=>`
+      <div class="topic-card" style="background:${t.lightBg};border-color:${t.color};color:${t.color}" onclick="selectTopic('${t.id}')">
+        <div class="topic-name">${t.name}</div>
+        <div class="topic-eng">${t.eng}</div>
+        <div class="topic-count">${t.sentences.length} rerenga</div>
+      </div>`).join('')}</div>`;
+  } else if (kState.phase === 'game') {
+    renderTopicGame(content);
+  } else {
+    renderTopicComplete(content);
+  }
+}
+
+// ─── CELEBRATION ─────────────────────────────────────────────────────────────
+const CELEBRATIONS = [
+  { phrase: 'Ka rawe!',          sub: 'Excellent!',       emoji: '🌿' },
+  { phrase: 'Taitamariki toa!',  sub: 'Champion!',        emoji: '🏆' },
+  { phrase: 'Kei te pai!',       sub: 'Good job!',        emoji: '⭐' },
+  { phrase: 'Mīharo!',           sub: 'Amazing!',         emoji: '✨' },
+  { phrase: 'Koina!',            sub: "Yes, that's it!",  emoji: '🎉' },
+  { phrase: 'Kei reira!',        sub: "That's the one!",  emoji: '🌟' },
+  { phrase: 'Āe mārika!',        sub: 'Absolutely right!',emoji: '🌺' },
+  { phrase: 'Tino pai!',         sub: 'Very good!',       emoji: '💚' },
+];
+
+const CONFETTI_COLORS = [
+  '#4CAF50','#1B5E20','#F9A825','#FFD600',
+  '#A5D6A7','#FFF176','#81C784','#FFCA28',
+];
+
+let _celebTimer = null;
+
+function showCelebration() {
+  const c = CELEBRATIONS[Math.floor(Math.random() * CELEBRATIONS.length)];
+  document.getElementById('celeb-emoji').textContent  = c.emoji;
+  document.getElementById('celeb-phrase').textContent = c.phrase;
+  document.getElementById('celeb-sub').textContent    = c.sub;
+  document.getElementById('celebration-overlay').classList.add('show');
+  launchConfetti();
+  clearTimeout(_celebTimer);
+  _celebTimer = setTimeout(closeCelebration, 2200);
+}
+
+function closeCelebration() {
+  document.getElementById('celebration-overlay').classList.remove('show');
+}
+
+function launchConfetti() {
+  const container = document.getElementById('confetti-container');
+  container.innerHTML = '';
+  const count = 72;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    const left  = Math.random() * 100;
+    const delay = Math.random() * 0.6;
+    const dur   = 1.4 + Math.random() * 1.2;
+    const size  = 7 + Math.random() * 8;
+    const shape = Math.random() > 0.4 ? '50%' : '2px';
+    el.style.cssText = `
+      left:${left}vw;
+      width:${size}px; height:${size}px;
+      background:${color};
+      border-radius:${shape};
+      animation-duration:${dur}s;
+      animation-delay:${delay}s;
+    `;
+    container.appendChild(el);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 3200);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+renderLevels();
+renderTopics();
+</script>
+</body>
+</html>
