@@ -1247,7 +1247,13 @@ function lNext() {
   lState._usedSet = new Set();
   renderLevels();
 }
-function lClear() { lState.placed=[]; lState._usedSet=new Set(); renderLevels(); }
+function lClear() {
+  const ld = LEVEL_DATA[lState.level];
+  const wasWrong = lState.checked && !isCorrect(ld.sentences[lState.queue[lState.qIdx]]);
+  lState.placed=[]; lState._usedSet=new Set();
+  if (wasWrong) lState.checked=false;
+  renderLevels();
+}
 function lHint() {
   const ld = LEVEL_DATA[lState.level];
   const sentence = ld.sentences[lState.queue[lState.qIdx]];
@@ -1387,7 +1393,13 @@ function kNext() {
   kState._usedSet = new Set();
   renderTopics();
 }
-function kClear() { kState.placed=[]; kState._usedSet=new Set(); renderTopics(); }
+function kClear() {
+  const topic = TOPICS.find(t=>t.id===kState.kaupapa);
+  const wasWrong = kState.checked && !isKCorrect(topic.sentences[kState.queue[kState.qIdx]]);
+  kState.placed=[]; kState._usedSet=new Set();
+  if (wasWrong) kState.checked=false;
+  renderTopics();
+}
 function kHint() {
   const topic = TOPICS.find(t=>t.id===kState.kaupapa);
   const sentence = topic.sentences[kState.queue[kState.qIdx]];
