@@ -1284,8 +1284,11 @@ function renderTopics() {
 }
 function selectTopic(id) {
   const topic = TOPICS.find(t=>t.id===id);
+  // Sort by word count ascending so sentences go easy → hard
+  const sorted = [...Array(topic.sentences.length).keys()]
+    .sort((a,b) => topic.sentences[a].words.length - topic.sentences[b].words.length);
   kState = { kaupapa:id, qIdx:0, placed:[], score:0, total:0, streak:0, phase:'game', checked:false,
-    queue: shuffle([...Array(topic.sentences.length).keys()]) };
+    queue: sorted };
   kState._pool = getPool(topic.sentences[kState.queue[0]]);
   kState._usedSet = new Set();
   renderTopics();
