@@ -2,10 +2,10 @@
 
 ## Priority 1 — Core UX (do first)
 - [x] Add a "how to play" intro screen with simple animated instructions
-- [ ] Add a practice sentence before the first real question at each level
-- [ ] Move the colour key above the word pool
-- [ ] Show completion stars/ticks on topic cards in the grid
-- [ ] Increase tile font size at Emerging level
+- [x] Add a practice sentence before the first real question at each level
+- [x] Move the colour key above the word pool
+- [x] Show completion stars/ticks on topic cards in the grid
+- [x] Increase tile font size at Emerging level
 
 ## Priority 2 — Engagement
 - [ ] Add correct/incorrect sound effects

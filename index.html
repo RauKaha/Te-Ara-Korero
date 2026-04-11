@@ -528,6 +528,57 @@ body {
   flex-shrink: 0;
 }
 
+/* ── PRACTICE MODE ──────────────────────────────────────────── */
+.practice-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--gold-light);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #795548;
+  gap: 10px;
+}
+.practice-banner-label { display: flex; align-items: center; gap: 7px; }
+.practice-badge {
+  background: var(--gold);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.skip-btn {
+  background: none; border: none;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--grey-700); cursor: pointer;
+  white-space: nowrap; text-decoration: underline;
+  flex-shrink: 0;
+}
+.skip-btn:hover { color: var(--grey-900); }
+
+/* Larger tiles for Tipu (Emerging) level */
+.game-area[data-level="tipu"] .tile {
+  font-size: 16px;
+  padding: 10px 18px;
+}
+
+/* Topic card completion indicator */
+.topic-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-top: 5px;
+}
+
 /* ── BUTTONS ────────────────────────────────────────────────── */
 .btn-row {
   display: flex;
@@ -1464,6 +1515,8 @@ function renderLevels() {
       </div>
       <button class="btn btn-start btn-primary" onclick="startLevel()">Tīmata — Start</button>
     </div>`;
+  } else if (lState.phase === 'practice') {
+    renderPractice(content, ld);
   } else if (lState.phase === 'game') {
     renderLevelGame(content, ld);
   } else {
@@ -1472,11 +1525,96 @@ function renderLevels() {
 }
 function startLevel() {
   const ld = LEVEL_DATA[lState.level];
+  // Pick the easiest sentence (fewest words) as the practice sentence
+  const practiceS = ld.sentences.reduce((min, s) => s.words.length < min.words.length ? s : min, ld.sentences[0]);
   lState.queue = shuffle([...Array(ld.sentences.length).keys()]);
-  lState.qIdx = 0; lState.placed = []; lState.score = 0; lState.total = 0;
-  lState.streak = 0; lState.phase = 'game'; lState.checked = false;
+  lState.qIdx = 0; lState.score = 0; lState.total = 0; lState.streak = 0;
+  lState.checked = false; lState.placed = [];
+  // Practice phase: correct words only, no distractors, shuffled
+  lState.phase = 'practice';
+  lState._practiceS = practiceS;
+  lState._practicePlaced = [];
+  lState._practiceChecked = false;
+  lState._practicePool = shuffle(practiceS.words.map((w,i) => ({...w, _origIdx:i})));
+  lState._practiceUsedSet = new Set();
+  renderLevels();
+}
+function beginGame() {
+  const ld = LEVEL_DATA[lState.level];
+  lState.phase = 'game';
   lState._pool = getPool(ld.sentences[lState.queue[lState.qIdx]]);
   lState._usedSet = new Set();
+  renderLevels();
+}
+function skipPractice() { beginGame(); }
+function renderPractice(container, ld) {
+  const s = lState._practiceS;
+  const cats = getCategories(s);
+  const correct = lState._practiceChecked ? isPracticeCorrect(s) : null;
+  container.innerHTML = `
+  <div class="game-area" data-level="${lState.level}">
+    <div class="practice-banner">
+      <div class="practice-banner-label">
+        <span class="practice-badge">Whakamātautau</span>
+        Practice round — this doesn't count!
+      </div>
+      <button class="skip-btn" onclick="skipPractice()">Tāheke — Skip →</button>
+    </div>
+    <div class="question-panel">
+      <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
+      <div class="question-text">${s.translation}</div>
+    </div>
+    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
+    <div class="drop-zone-label">Tō rerenga — Your sentence</div>
+    <div class="drop-zone${lState._practicePlaced.length>0?' has-tiles':''}" id="drop-zone">
+      ${lState._practicePlaced.length===0
+        ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>'
+        : lState._practicePlaced.map((w,i)=>`<span class="tile placed ${w.c}" onclick="pPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+    </div>
+    ${lState._practiceChecked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
+      <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
+      <div class="feedback-sentence">${correct?correctSentence(s):'Correct: '+correctSentence(s)}</div>
+    </div>` : ''}
+    <div class="tile-pool" id="tile-pool">
+      ${lState._practicePool.map((w,i)=>{
+        const used = lState._practiceUsedSet.has(i);
+        return `<span class="tile ${w.c}${used?' used':''}" onclick="pPoolClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`;
+      }).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="pCheck()" ${lState._practiceChecked||lState._practicePlaced.length===0?'disabled':''}>Tūtohu — Check</button>
+      <button class="btn btn-secondary" onclick="pClear()">Ūkui — Clear</button>
+      ${lState._practiceChecked ? `<button class="btn btn-next" onclick="beginGame()">Tīmata! — Begin →</button>` : ''}
+    </div>
+  </div>`;
+}
+function isPracticeCorrect(s) {
+  if (lState._practicePlaced.length !== s.words.length) return false;
+  return s.words.every((w,i) => lState._practicePlaced[i] && lState._practicePlaced[i].w === w.w);
+}
+function pPoolClick(idx) {
+  if (lState._practiceChecked) return;
+  lState._practiceUsedSet.add(idx);
+  lState._practicePlaced.push({...lState._practicePool[idx]});
+  renderLevels();
+}
+function pPlacedClick(i) {
+  if (lState._practiceChecked) return;
+  const w = lState._practicePlaced[i];
+  lState._practicePlaced.splice(i, 1);
+  const pidx = lState._practicePool.findIndex((p,pi) => !lState._practiceUsedSet.has(pi) ? false : p.w === w.w && p.c === w.c);
+  if (pidx >= 0) lState._practiceUsedSet.delete(pidx);
+  renderLevels();
+}
+function pCheck() {
+  lState._practiceChecked = true;
+  if (isPracticeCorrect(lState._practiceS)) showCelebration();
+  renderLevels();
+}
+function pClear() {
+  const wasWrong = lState._practiceChecked && !isPracticeCorrect(lState._practiceS);
+  lState._practicePlaced = []; lState._practiceUsedSet = new Set();
+  if (wasWrong) lState._practiceChecked = false;
   renderLevels();
 }
 function renderLevelGame(container, ld) {
@@ -1488,7 +1626,7 @@ function renderLevelGame(container, ld) {
   const correct = lState.checked ? isCorrect(sentence) : null;
 
   container.innerHTML = `
-  <div class="game-area">
+  <div class="game-area" data-level="${lState.level}">
     <div class="progress-row">
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%;background:${ld.color}"></div></div>
       <span class="score-pill">${lState.score} / ${lState.qIdx} tika</span>
@@ -1498,6 +1636,7 @@ function renderLevelGame(container, ld) {
       <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
       <div class="question-text">${sentence.translation}</div>
     </div>
+    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="drop-zone-label">Tō rerenga — Your sentence</div>
     <div class="drop-zone${lState.placed.length>0?' has-tiles':''}" id="drop-zone">
       ${lState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : lState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="lPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
@@ -1506,7 +1645,6 @@ function renderLevelGame(container, ld) {
       <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
       <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
     </div>` : ''}
-    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="tile-pool" id="tile-pool">
       ${lState._pool.map((w,i)=>makeTileHTML(w,i,lState.placed,lState._usedSet,true)).join('')}
     </div>
@@ -1631,6 +1769,7 @@ function renderTopicGame(container) {
       <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
       <div class="question-text">${sentence.translation}</div>
     </div>
+    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="drop-zone-label">Tō rerenga — Your sentence</div>
     <div class="drop-zone${kState.placed.length>0?' has-tiles':''}" id="kdrop-zone">
       ${kState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : kState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="kPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
@@ -1639,7 +1778,6 @@ function renderTopicGame(container) {
       <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
       <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
     </div>` : ''}
-    <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="tile-pool" id="ktile-pool">
       ${kState._pool.map((w,i)=>{
         const used = kState._usedSet.has(i);
@@ -1659,6 +1797,7 @@ function renderTopicComplete(container) {
   const topic = TOPICS.find(t=>t.id===kState.kaupapa);
   const pct = Math.round((kState.score/topic.sentences.length)*100);
   const stars = starsFor(pct);
+  saveTopicScore(kState.kaupapa, pct);
   container.innerHTML = `
   <button class="back-btn" onclick="backToTopics()">← Ngā Kaupapa</button>
   <div class="complete-screen">
@@ -1723,16 +1862,30 @@ function kHint() {
 }
 
 // Handle phase name for topics complete screen
+function getTopicScores() {
+  try { return JSON.parse(localStorage.getItem('teara-topic-scores') || '{}'); } catch(e) { return {}; }
+}
+function saveTopicScore(topicId, pct) {
+  const scores = getTopicScores();
+  const newStars = pct >= 80 ? 3 : pct >= 50 ? 2 : 1;
+  if (!scores[topicId] || newStars > scores[topicId]) scores[topicId] = newStars;
+  try { localStorage.setItem('teara-topic-scores', JSON.stringify(scores)); } catch(e) {}
+}
 function renderTopics() {
   const content = document.getElementById('topics-content');
   if (kState.phase === 'pick') {
-    content.innerHTML = `<div class="topic-grid">${TOPICS.map(t=>`
-      <div class="topic-card" style="background:${t.lightBg};border-color:${t.color};color:${t.color}" onclick="selectTopic('${t.id}')">
+    const scores = getTopicScores();
+    content.innerHTML = `<div class="topic-grid">${TOPICS.map(t => {
+      const s = scores[t.id];
+      const doneBadge = s ? `<div class="topic-done" style="color:${t.color}">${'★'.repeat(s)}${'☆'.repeat(3-s)}</div>` : '';
+      return `<div class="topic-card" style="background:${t.lightBg};border-color:${t.color};color:${t.color}" onclick="selectTopic('${t.id}')">
         <div class="topic-icon">${TOPIC_ICONS[t.id]||''}</div>
         <div class="topic-name">${t.name}</div>
         <div class="topic-eng">${t.eng}</div>
         <div class="topic-count">${t.sentences.length} rerenga</div>
-      </div>`).join('')}</div>`;
+        ${doneBadge}
+      </div>`;
+    }).join('')}</div>`;
   } else if (kState.phase === 'game') {
     renderTopicGame(content);
   } else {
