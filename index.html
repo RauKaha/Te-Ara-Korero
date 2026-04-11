@@ -85,7 +85,128 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: space-between;
 }
+.site-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.htp-trigger {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s;
+  line-height: 1;
+}
+.htp-trigger:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.7); }
+
+/* ── HOW TO PLAY MODAL ──────────────────────────────────────── */
+.htp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.htp-overlay.hidden { display: none; }
+.htp-modal {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 28px 22px 22px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.28);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.htp-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: var(--grey-200);
+  border: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--grey-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: inherit;
+}
+.htp-close:hover { background: var(--grey-300); }
+.htp-koru { width: 44px; height: 44px; margin-bottom: 10px; }
+.htp-title {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--green-deep);
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+.htp-sub { font-size: 12px; color: var(--grey-500); margin-bottom: 20px; }
+.htp-steps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.htp-step { display: flex; align-items: flex-start; gap: 12px; }
+.htp-step-num {
+  min-width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--green-deep);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.htp-step-body strong { display: block; font-size: 14px; font-weight: 700; color: var(--grey-900); }
+.htp-step-body span   { font-size: 12px; color: var(--grey-700); line-height: 1.4; }
+.htp-divider { height: 1px; background: var(--grey-200); margin: 16px 0; }
+.htp-legend-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--grey-500); margin-bottom: 10px;
+}
+.htp-legend { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.htp-chip {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 9px; border-radius: 20px; border: 1.5px solid;
+}
+.htp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.htp-example {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  background: var(--grey-100); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-bottom: 20px;
+}
+.htp-ex-tile { font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: var(--radius-xs); border: 1.5px solid; }
+.htp-ex-arrow { font-size: 11px; color: var(--grey-500); flex-basis: 100%; margin-top: 4px; }
+.htp-btn {
+  width: 100%; padding: 14px;
+  background: var(--green-fern); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background .15s, transform .1s;
+  letter-spacing: .01em;
+}
+.htp-btn:hover  { background: var(--green-fern-dk); }
+.htp-btn:active { transform: scale(0.98); }
 .site-koru {
   width: 36px; height: 36px; flex-shrink: 0;
 }
@@ -659,22 +780,94 @@ body {
 <!-- SITE HEADER -->
 <header class="site-header">
   <div class="site-header-inner">
-    <svg class="site-koru" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M50 88 C22 88 8 68 8 50 C8 28 26 12 50 12 C66 12 78 23 78 38 C78 53 67 62 52 62 C42 62 34 55 34 45 C34 36 41 30 50 30" stroke="#4CAF50" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <circle cx="50" cy="88" r="5" fill="#F9A825"/>
-    </svg>
-    <div>
-      <div class="site-title">
-        Te Ara Kōrero
-        <span>Māori Sentence Builder</span>
+    <div class="site-header-left">
+      <svg class="site-koru" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M50 88 C22 88 8 68 8 50 C8 28 26 12 50 12 C66 12 78 23 78 38 C78 53 67 62 52 62 C42 62 34 55 34 45 C34 36 41 30 50 30" stroke="#4CAF50" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <circle cx="50" cy="88" r="5" fill="#F9A825"/>
+      </svg>
+      <div>
+        <div class="site-title">
+          Te Ara Kōrero
+          <span>Māori Sentence Builder</span>
+        </div>
       </div>
     </div>
+    <button class="htp-trigger" onclick="openHTP()" aria-label="Me pēhea te tākaro — How to play">?</button>
   </div>
 </header>
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('levels')" id="tab-levels">Ngā Taumata — Levels</button>
   <button class="tab-btn" onclick="switchTab('topics')" id="tab-topics">Ngā Kaupapa — Topics</button>
+</div>
+
+<!-- HOW TO PLAY MODAL -->
+<div class="htp-overlay hidden" id="htp-overlay">
+  <div class="htp-modal" role="dialog" aria-modal="true" aria-labelledby="htp-title">
+    <button class="htp-close" onclick="closeHTP()" aria-label="Kati">✕</button>
+
+    <svg class="htp-koru" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M50 88 C22 88 8 68 8 50 C8 28 26 12 50 12 C66 12 78 23 78 38 C78 53 67 62 52 62 C42 62 34 55 34 45 C34 36 41 30 50 30" stroke="#4CAF50" stroke-width="6" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="88" r="5" fill="#F9A825"/>
+    </svg>
+
+    <div class="htp-title" id="htp-title">Me pēhea te tākaro?</div>
+    <div class="htp-sub">How to play · Te Ara Kōrero</div>
+
+    <div class="htp-steps">
+      <div class="htp-step">
+        <div class="htp-step-num">1</div>
+        <div class="htp-step-body">
+          <strong>Pānui — Read</strong>
+          <span>Read the English sentence shown in the question panel</span>
+        </div>
+      </div>
+      <div class="htp-step">
+        <div class="htp-step-num">2</div>
+        <div class="htp-step-body">
+          <strong>Pātō — Tap</strong>
+          <span>Tap the coloured tiles in the word bank to build the Māori sentence in the correct order. Tap a placed tile to remove it.</span>
+        </div>
+      </div>
+      <div class="htp-step">
+        <div class="htp-step-num">3</div>
+        <div class="htp-step-body">
+          <strong>Tūtohu — Check</strong>
+          <span>Press <strong>Tūtohu</strong> to check your answer. Wrong? Press <strong>Ūkui</strong> to clear and try again.</span>
+        </div>
+      </div>
+      <div class="htp-step">
+        <div class="htp-step-num">4</div>
+        <div class="htp-step-body">
+          <strong>Āwhina — Hint</strong>
+          <span>Stuck? Press <strong>Āwhina</strong> to highlight the next correct word in the bank.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="htp-example">
+      <span class="htp-ex-tile" style="background:var(--cat-tense-bg);border-color:var(--cat-tense-border);color:var(--cat-tense-text)">Kei te</span>
+      <span class="htp-ex-tile" style="background:var(--cat-verb-bg);border-color:var(--cat-verb-border);color:var(--cat-verb-text)">kai</span>
+      <span class="htp-ex-tile" style="background:var(--cat-det-bg);border-color:var(--cat-det-border);color:var(--cat-det-text)">te</span>
+      <span class="htp-ex-tile" style="background:var(--cat-noun-bg);border-color:var(--cat-noun-border);color:var(--cat-noun-text)">tamaiti</span>
+      <div class="htp-ex-arrow">↑ "The child is eating."</div>
+    </div>
+
+    <div class="htp-divider"></div>
+    <div class="htp-legend-label">Ngā tae kupu — Word colour key</div>
+    <div class="htp-legend">
+      <span class="htp-chip" style="background:var(--cat-tense-bg);border-color:var(--cat-tense-border);color:var(--cat-tense-text)"><span class="htp-dot" style="background:var(--cat-tense-border)"></span>Tohu wā</span>
+      <span class="htp-chip" style="background:var(--cat-verb-bg);border-color:var(--cat-verb-border);color:var(--cat-verb-text)"><span class="htp-dot" style="background:var(--cat-verb-border)"></span>Kupu Mahi</span>
+      <span class="htp-chip" style="background:var(--cat-det-bg);border-color:var(--cat-det-border);color:var(--cat-det-text)"><span class="htp-dot" style="background:var(--cat-det-border)"></span>Kupu Tohu</span>
+      <span class="htp-chip" style="background:var(--cat-noun-bg);border-color:var(--cat-noun-border);color:var(--cat-noun-text)"><span class="htp-dot" style="background:var(--cat-noun-border)"></span>Kupu Ingoa</span>
+      <span class="htp-chip" style="background:var(--cat-adj-bg);border-color:var(--cat-adj-border);color:var(--cat-adj-text)"><span class="htp-dot" style="background:var(--cat-adj-border)"></span>Kupu Āhua</span>
+      <span class="htp-chip" style="background:var(--cat-loc-bg);border-color:var(--cat-loc-border);color:var(--cat-loc-text)"><span class="htp-dot" style="background:var(--cat-loc-border)"></span>Kupu Wāhi</span>
+      <span class="htp-chip" style="background:var(--cat-subj-bg);border-color:var(--cat-subj-border);color:var(--cat-subj-text)"><span class="htp-dot" style="background:var(--cat-subj-border)"></span>Kupu Ingoa (subject)</span>
+      <span class="htp-chip" style="background:var(--cat-conn-bg);border-color:var(--cat-conn-border);color:var(--cat-conn-text)"><span class="htp-dot" style="background:var(--cat-conn-border)"></span>Kupu Tūhono</span>
+    </div>
+
+    <button class="htp-btn" onclick="closeHTP()">Māu ana! — Got it!</button>
+  </div>
 </div>
 
 <!-- CELEBRATION MODAL -->
@@ -1607,9 +1800,35 @@ function launchConfetti() {
   setTimeout(() => { container.innerHTML = ''; }, 3200);
 }
 
+// ─── HOW TO PLAY ─────────────────────────────────────────────────────────────
+function openHTP() {
+  const overlay = document.getElementById('htp-overlay');
+  overlay.classList.remove('hidden');
+  overlay.querySelector('.htp-modal').scrollTop = 0;
+}
+function closeHTP() {
+  document.getElementById('htp-overlay').classList.add('hidden');
+  try { localStorage.setItem('teara-htp-seen', '1'); } catch(e) {}
+}
+document.getElementById('htp-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeHTP();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeHTP();
+});
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 renderLevels();
 renderTopics();
+
+// Show how-to-play on first visit only
+(function() {
+  try {
+    if (!localStorage.getItem('teara-htp-seen')) openHTP();
+  } catch(e) {
+    openHTP();
+  }
+})();
 </script>
 </body>
 </html>

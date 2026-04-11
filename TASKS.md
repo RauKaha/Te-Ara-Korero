@@ -1,7 +1,7 @@
 # RauKaha — Te Ara Kōrero improvement tasks
 
 ## Priority 1 — Core UX (do first)
-- [ ] Add a "how to play" intro screen with simple animated instructions
+- [x] Add a "how to play" intro screen with simple animated instructions
 - [ ] Add a practice sentence before the first real question at each level
 - [ ] Move the colour key above the word pool
 - [ ] Show completion stars/ticks on topic cards in the grid
