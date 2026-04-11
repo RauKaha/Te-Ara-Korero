@@ -579,6 +579,89 @@ body {
   margin-top: 5px;
 }
 
+/* ── TILE BOUNCE (correct answer) ───────────────────────────── */
+@keyframes tileBounce {
+  0%   { transform: translateY(0)   scale(1);    }
+  25%  { transform: translateY(-8px) scale(1.08); }
+  55%  { transform: translateY(2px)  scale(0.97); }
+  75%  { transform: translateY(-4px) scale(1.03); }
+  100% { transform: translateY(0)   scale(1);    }
+}
+.tile.bounce { animation: tileBounce 0.45s ease forwards; }
+
+/* ── STREAK TOAST ────────────────────────────────────────────── */
+.streak-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--green-deep);
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 10px 22px;
+  border-radius: 40px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+  z-index: 800;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  white-space: nowrap;
+}
+.streak-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── TIMER BAR ───────────────────────────────────────────────── */
+.timer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.timer-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--grey-200);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.timer-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s linear, background .4s;
+  background: var(--green-fern);
+}
+.timer-bar-fill.warning { background: var(--gold); }
+.timer-bar-fill.danger  { background: #E53935; }
+.timer-label {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+  color: var(--grey-700);
+  font-variant-numeric: tabular-nums;
+}
+.timer-label.danger { color: #E53935; }
+.timer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--grey-700);
+  margin-top: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.timer-toggle input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--green-fern);
+  cursor: pointer;
+}
+
 /* ── BUTTONS ────────────────────────────────────────────────── */
 .btn-row {
   display: flex;
@@ -932,6 +1015,7 @@ body {
 
 <!-- CONFETTI CANVAS -->
 <div class="confetti-container" id="confetti-container"></div>
+<div class="streak-toast" id="streak-toast"></div>
 
 <!-- LEVELS TAB -->
 <div class="tab-panel active" id="panel-levels">
@@ -1485,6 +1569,7 @@ function starsFor(pct) {
 
 // ─── TAB SWITCHING ───────────────────────────────────────────────────────────
 function switchTab(tab) {
+  stopTimer();
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -1495,6 +1580,7 @@ function switchTab(tab) {
 
 // ─── LEVELS TAB ──────────────────────────────────────────────────────────────
 function selectLevel(levelId) {
+  stopTimer();
   lState = { level:levelId, qIdx:0, placed:[], score:0, total:0, streak:0, phase:'intro', checked:false, queue:[] };
   document.querySelectorAll('.level-chip').forEach(c=>c.classList.remove('active'));
   document.querySelector(`.level-chip[data-level="${levelId}"]`).classList.add('active');
@@ -1504,6 +1590,7 @@ function renderLevels() {
   const content = document.getElementById('levels-content');
   const ld = LEVEL_DATA[lState.level];
   if (lState.phase === 'intro') {
+    const isMatatau = lState.level === 'matatau';
     content.innerHTML = `
     <div class="intro-screen">
       <span class="intro-badge" style="background:${ld.color}">${ld.years}</span>
@@ -1513,6 +1600,10 @@ function renderLevels() {
         <strong>Hanganga — Structure</strong>
         ${ld.structure}
       </div>
+      ${isMatatau ? `<label class="timer-toggle">
+        <input type="checkbox" id="timer-checkbox" ${lState._timerOn ? 'checked' : ''} onchange="lState._timerOn = this.checked">
+        ⏱ Wā — Timer mode (30s per question)
+      </label>` : ''}
       <button class="btn btn-start btn-primary" onclick="startLevel()">Tīmata — Start</button>
     </div>`;
   } else if (lState.phase === 'practice') {
@@ -1545,6 +1636,7 @@ function beginGame() {
   lState._pool = getPool(ld.sentences[lState.queue[lState.qIdx]]);
   lState._usedSet = new Set();
   renderLevels();
+  if (lState._timerOn) startTimer();
 }
 function skipPractice() { beginGame(); }
 function renderPractice(container, ld) {
@@ -1632,6 +1724,10 @@ function renderLevelGame(container, ld) {
       <span class="score-pill">${lState.score} / ${lState.qIdx} tika</span>
       <span class="score-pill">Raupeka: ${lState.streak}</span>
     </div>
+    ${lState._timerOn ? `<div class="timer-row">
+      <div class="timer-bar-wrap"><div class="timer-bar-fill" id="timer-bar" style="width:100%"></div></div>
+      <span class="timer-label" id="timer-label">30</span>
+    </div>` : ''}
     <div class="question-panel">
       <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
       <div class="question-text">${sentence.translation}</div>
@@ -1675,25 +1771,37 @@ function renderLevelComplete(container, ld) {
     </div>
   </div>`;
 }
-function lPoolClick(idx) { if (lState.checked) return; const w = lState._pool[idx]; lState._usedSet.add(idx); lState.placed.push({...w}); renderLevels(); }
+function lPoolClick(idx) { if (lState.checked) return; playTileTap(); const w = lState._pool[idx]; lState._usedSet.add(idx); lState.placed.push({...w}); renderLevels(); }
 function lPlacedClick(i) { if (lState.checked) return; const w = lState.placed[i]; lState.placed.splice(i,1); const pidx = lState._pool.findIndex((p,pi)=>!lState._usedSet.has(pi)?false:p.w===w.w&&p.c===w.c); if (pidx>=0) lState._usedSet.delete(pidx); renderLevels(); }
 function lCheck() {
   const ld = LEVEL_DATA[lState.level];
   const sentence = ld.sentences[lState.queue[lState.qIdx]];
   lState.checked = true;
   const ok = isCorrect(sentence);
-  if (ok) { lState.score++; lState.streak++; showCelebration(); } else { lState.streak=0; }
+  stopTimer();
+  if (ok) {
+    lState.score++; lState.streak++;
+    playCorrect();
+    showCelebration();
+    renderLevels();
+    requestAnimationFrame(() => requestAnimationFrame(bouncePlacedTiles));
+    checkStreakReward(lState.streak);
+  } else {
+    lState.streak = 0;
+    playWrong();
+    renderLevels();
+  }
   lState.total++;
-  renderLevels();
 }
 function lNext() {
   lState.qIdx++;
   const total = LEVEL_DATA[lState.level].sentences.length;
-  if (lState.qIdx >= total) { lState.phase='complete'; renderLevels(); return; }
+  if (lState.qIdx >= total) { lState.phase='complete'; stopTimer(); renderLevels(); return; }
   lState.placed=[]; lState.checked=false;
   lState._pool = getPool(LEVEL_DATA[lState.level].sentences[lState.queue[lState.qIdx]]);
   lState._usedSet = new Set();
   renderLevels();
+  if (lState._timerOn) startTimer();
 }
 function lClear() {
   const ld = LEVEL_DATA[lState.level];
@@ -1813,7 +1921,7 @@ function renderTopicComplete(container) {
   </div>`;
 }
 function backToTopics() { kState.phase='pick'; renderTopics(); }
-function kPoolClick(idx) { if (kState.checked) return; const w = kState._pool[idx]; kState._usedSet.add(idx); kState.placed.push({...w}); renderTopics(); }
+function kPoolClick(idx) { if (kState.checked) return; playTileTap(); const w = kState._pool[idx]; kState._usedSet.add(idx); kState.placed.push({...w}); renderTopics(); }
 function kPlacedClick(i) {
   if (kState.checked) return;
   const w = kState.placed[i]; kState.placed.splice(i,1);
@@ -1828,11 +1936,21 @@ function isKCorrect(sentence) {
 function kCheck() {
   const topicObj = TOPICS.find(t=>t.id===kState.kaupapa);
   const sentence = topicObj.sentences[kState.queue[kState.qIdx]];
-  kState.checked=true;
-  const ok=isKCorrect(sentence);
-  if(ok){kState.score++;kState.streak++;showCelebration();}else{kState.streak=0;}
+  kState.checked = true;
+  const ok = isKCorrect(sentence);
+  if (ok) {
+    kState.score++; kState.streak++;
+    playCorrect();
+    showCelebration();
+    renderTopics();
+    requestAnimationFrame(() => requestAnimationFrame(bouncePlacedTiles));
+    checkStreakReward(kState.streak);
+  } else {
+    kState.streak = 0;
+    playWrong();
+    renderTopics();
+  }
   kState.total++;
-  renderTopics();
 }
 function kNext() {
   kState.qIdx++;
@@ -1891,6 +2009,122 @@ function renderTopics() {
   } else {
     renderTopicComplete(content);
   }
+}
+
+// ─── SOUND ENGINE ────────────────────────────────────────────────────────────
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playTone(frequency, type, duration, gain, startDelay) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.connect(vol); vol.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, ctx.currentTime + (startDelay||0));
+    vol.gain.setValueAtTime(gain, ctx.currentTime + (startDelay||0));
+    vol.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (startDelay||0) + duration);
+    osc.start(ctx.currentTime + (startDelay||0));
+    osc.stop(ctx.currentTime + (startDelay||0) + duration);
+  } catch(e) {}
+}
+function playCorrect() {
+  // Rising two-tone chime: C5 → E5
+  playTone(523, 'sine', 0.15, 0.35, 0);
+  playTone(659, 'sine', 0.22, 0.30, 0.12);
+}
+function playWrong() {
+  // Short low buzz
+  playTone(220, 'square', 0.18, 0.12, 0);
+  playTone(180, 'square', 0.14, 0.08, 0.10);
+}
+function playTileTap() {
+  // Soft tick
+  playTone(880, 'sine', 0.05, 0.07, 0);
+}
+function playStreakReward() {
+  // Ascending arpeggio: C5–E5–G5–C6
+  [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'sine', 0.18, 0.28, i * 0.09));
+}
+function playTimerWarning() {
+  playTone(440, 'sine', 0.12, 0.18, 0);
+}
+function playTimeUp() {
+  playTone(300, 'sawtooth', 0.3, 0.2, 0);
+  playTone(200, 'sawtooth', 0.2, 0.15, 0.15);
+}
+
+// ─── TILE BOUNCE ─────────────────────────────────────────────────────────────
+function bouncePlacedTiles() {
+  const tiles = document.querySelectorAll('#drop-zone .tile.placed, #kdrop-zone .tile.placed');
+  tiles.forEach((t, i) => {
+    setTimeout(() => {
+      t.classList.remove('bounce');
+      void t.offsetWidth; // reflow to restart animation
+      t.classList.add('bounce');
+    }, i * 40);
+  });
+}
+
+// ─── STREAK REWARDS ──────────────────────────────────────────────────────────
+let _streakToastTimer = null;
+const STREAK_MESSAGES = {
+  5:  { mi: 'Raupeka 5! 🔥',  en: 'Streak of 5!' },
+  10: { mi: 'Raupeka 10! 🌟', en: 'Unstoppable!' },
+  15: { mi: 'Raupeka 15! 💥', en: 'Legendary streak!' },
+  20: { mi: 'Raupeka 20! 🏆', en: 'Tino matatau!' },
+};
+function checkStreakReward(streak) {
+  if (!STREAK_MESSAGES[streak]) return;
+  const msg = STREAK_MESSAGES[streak];
+  const toast = document.getElementById('streak-toast');
+  toast.innerHTML = `${msg.mi} <span style="font-weight:500;opacity:.8">${msg.en}</span>`;
+  toast.classList.add('show');
+  playStreakReward();
+  clearTimeout(_streakToastTimer);
+  _streakToastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// ─── TIMER ───────────────────────────────────────────────────────────────────
+const TIMER_SECONDS = 30;
+let _timerInterval = null;
+let _timerRemaining = TIMER_SECONDS;
+
+function startTimer() {
+  stopTimer();
+  _timerRemaining = TIMER_SECONDS;
+  updateTimerUI();
+  _timerInterval = setInterval(() => {
+    _timerRemaining--;
+    updateTimerUI();
+    if (_timerRemaining === 10) playTimerWarning();
+    if (_timerRemaining <= 0) {
+      stopTimer();
+      playTimeUp();
+      // Auto-check with empty answer (marks wrong, advances)
+      lState.checked = true;
+      lState.streak = 0;
+      lState.total++;
+      renderLevels();
+    }
+  }, 1000);
+}
+function stopTimer() {
+  clearInterval(_timerInterval);
+  _timerInterval = null;
+}
+function updateTimerUI() {
+  const bar   = document.getElementById('timer-bar');
+  const label = document.getElementById('timer-label');
+  if (!bar || !label) return;
+  const pct = (_timerRemaining / TIMER_SECONDS) * 100;
+  bar.style.width = pct + '%';
+  bar.className = 'timer-bar-fill' + (_timerRemaining <= 5 ? ' danger' : _timerRemaining <= 10 ? ' warning' : '');
+  label.textContent = _timerRemaining;
+  label.className = 'timer-label' + (_timerRemaining <= 5 ? ' danger' : '');
 }
 
 // ─── CELEBRATION ─────────────────────────────────────────────────────────────

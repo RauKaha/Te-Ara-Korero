@@ -8,10 +8,10 @@
 - [x] Increase tile font size at Emerging level
 
 ## Priority 2 — Engagement
-- [ ] Add correct/incorrect sound effects
-- [ ] Add visual celebration animation on correct answer (confetti or tile bounce)
-- [ ] Add streak rewards at 5 and 10 in a row
-- [ ] Add optional timer mode for Mastery level
+- [x] Add correct/incorrect sound effects
+- [x] Add visual celebration animation on correct answer (confetti or tile bounce)
+- [x] Add streak rewards at 5 and 10 in a row
+- [x] Add optional timer mode for Mastery level
 
 ## Priority 3 — Learning depth
 - [ ] Add small illustration/image alongside English prompt at Emerging level
