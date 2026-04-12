@@ -24,6 +24,6 @@
 - [ ] Improve mobile layout — horizontal scroll or smaller tiles on small screens
 
 ## Priority 5 — Progress and teacher tools
-- [ ] Add progress dashboard showing stars per level and topic
-- [ ] Add shareable result code or teacher view
-- [ ] Persist progress in localStorage between sessions
+- [x] Add progress dashboard showing stars per level and topic
+- [x] Add shareable result code or teacher view
+- [x] Persist progress in localStorage between sessions

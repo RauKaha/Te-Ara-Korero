@@ -731,6 +731,84 @@ body {
   cursor: pointer;
 }
 
+/* ── PROGRESS DASHBOARD ─────────────────────────────────────── */
+.dash-screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.dash-section-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--grey-500);
+  margin: 22px 0 10px;
+}
+.dash-total-bar-wrap {
+  height: 10px;
+  background: var(--grey-200);
+  border-radius: 50px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.dash-total-bar-fill {
+  height: 100%;
+  background: var(--green-fern);
+  border-radius: 50px;
+  transition: width .6s ease;
+}
+.dash-total-label { font-size: 12px; font-weight: 600; color: var(--grey-700); }
+.dash-levels { display: flex; gap: 10px; flex-wrap: wrap; }
+.dash-level-card {
+  flex: 1; min-width: 110px;
+  background: var(--white);
+  border: 2.5px solid var(--grey-200);
+  border-radius: var(--radius-sm);
+  padding: 12px 10px;
+  text-align: center;
+}
+.dash-level-card.done { border-color: var(--green-fern); }
+.dash-level-name { font-size: 13px; font-weight: 800; color: var(--grey-900); margin-bottom: 2px; }
+.dash-level-eng  { font-size: 10px; color: var(--grey-500); margin-bottom: 6px; }
+.dash-level-stars { font-size: 17px; letter-spacing: 2px; }
+.dash-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+.dash-topic-card {
+  background: var(--white);
+  border: 2px solid var(--grey-200);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  text-align: center;
+}
+.dash-topic-card.done { border-color: var(--green-fern); }
+.dash-topic-emoji { font-size: 26px; line-height: 1; margin-bottom: 4px; }
+.dash-topic-name  { font-size: 11px; font-weight: 700; color: var(--grey-900); margin-bottom: 3px; }
+.dash-topic-stars { font-size: 13px; letter-spacing: 1px; }
+.result-code-box {
+  background: var(--grey-100);
+  border: 1.5px solid var(--grey-300);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin-top: 24px;
+}
+.result-code-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--grey-500); margin-bottom: 6px;
+}
+.result-code-value {
+  font-family: 'Courier New', monospace;
+  font-size: 20px; font-weight: 700;
+  color: var(--green-deep);
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+.result-code-hint { font-size: 11px; color: var(--grey-500); margin-bottom: 14px; }
+.dash-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* ── BUTTONS ────────────────────────────────────────────────── */
 .btn-row {
   display: flex;
@@ -1002,6 +1080,7 @@ body {
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('levels')" id="tab-levels">Ngā Taumata — Levels</button>
   <button class="tab-btn" onclick="switchTab('topics')" id="tab-topics">Ngā Kaupapa — Topics</button>
+  <button class="tab-btn" onclick="switchTab('progress')" id="tab-progress">Aronui — Progress</button>
 </div>
 
 <!-- HOW TO PLAY MODAL -->
@@ -1100,6 +1179,11 @@ body {
 <!-- TOPICS TAB -->
 <div class="tab-panel" id="panel-topics">
   <div id="topics-content"></div>
+</div>
+
+<!-- PROGRESS TAB -->
+<div class="tab-panel" id="panel-progress">
+  <div id="progress-content"></div>
 </div>
 
 <script>
@@ -1257,6 +1341,12 @@ const WORD_MEANINGS = {
   'nō reira':'therefore / so',
   'hoi anō': 'however',
   'ko':      'is (identification)',
+};
+
+// ─── TOPIC EMOJIS (for progress dashboard) ───────────────────────────────────
+const TOPIC_EMOJIS = {
+  kura: '🏫', taiao: '🌿', hakinakina: '⚽', kainga: '🏠',
+  marae: '🏛️', kai: '🍽️', toa: '🏪', pamu: '🚜', haerenga: '✈️',
 };
 
 // ─── TIPU ILLUSTRATIONS (emoji per verb for Emerging level) ──────────────────
@@ -1818,8 +1908,9 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
-  if (tab==='levels') renderLevels();
-  if (tab==='topics') renderTopics();
+  if (tab==='levels')   renderLevels();
+  if (tab==='topics')   renderTopics();
+  if (tab==='progress') renderProgress();
 }
 
 // ─── LEVELS TAB ──────────────────────────────────────────────────────────────
@@ -1999,6 +2090,7 @@ function renderLevelGame(container, ld) {
 }
 function renderLevelComplete(container, ld) {
   const pct = Math.round((lState.score/ld.sentences.length)*100);
+  saveLevelScore(lState.level, pct);
   const stars = starsFor(pct);
   const levels = Object.keys(LEVEL_DATA);
   const nextIdx = levels.indexOf(lState.level)+1;
@@ -2233,6 +2325,113 @@ function saveTopicScore(topicId, pct) {
   const newStars = pct >= 80 ? 3 : pct >= 50 ? 2 : 1;
   if (!scores[topicId] || newStars > scores[topicId]) scores[topicId] = newStars;
   try { localStorage.setItem('teara-topic-scores', JSON.stringify(scores)); } catch(e) {}
+}
+function getLevelScores() {
+  try { return JSON.parse(localStorage.getItem('teara-level-scores') || '{}'); } catch(e) { return {}; }
+}
+function saveLevelScore(levelId, pct) {
+  const scores = getLevelScores();
+  const newStars = pct >= 80 ? 3 : pct >= 50 ? 2 : 1;
+  if (!scores[levelId] || newStars > scores[levelId]) scores[levelId] = newStars;
+  try { localStorage.setItem('teara-level-scores', JSON.stringify(scores)); } catch(e) {}
+}
+
+// ─── PROGRESS DASHBOARD ──────────────────────────────────────────────────────
+function getResultCode() {
+  const ls = getLevelScores();
+  const ts = getTopicScores();
+  const lPart = ['tipu','whakatipu','pakari','matatau'].map(id => ls[id]||0).join('');
+  const tPart = TOPICS.map(t => ts[t.id]||0).join('');
+  return `TAK-${lPart}-${tPart}`;
+}
+function copyResultCode() {
+  const code = getResultCode();
+  const btn = document.getElementById('copy-code-btn');
+  try {
+    navigator.clipboard.writeText(code).then(() => {
+      if (btn) { btn.textContent = '✓ Kua kopingia!'; setTimeout(() => { btn.textContent = 'Kopi — Copy'; }, 2200); }
+    });
+  } catch(e) {
+    // Fallback: select the text
+    const el = document.getElementById('result-code-text');
+    if (el) {
+      const r = document.createRange();
+      r.selectNode(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(r);
+    }
+  }
+}
+function resetProgress() {
+  if (!confirm('Ka ūkuia tō aronui katoa?\nReset all progress? This cannot be undone.')) return;
+  try {
+    localStorage.removeItem('teara-level-scores');
+    localStorage.removeItem('teara-topic-scores');
+  } catch(e) {}
+  renderProgress();
+  // refresh topic grid stars
+  if (kState.phase === 'pick') renderTopics();
+}
+function renderProgress() {
+  const content = document.getElementById('progress-content');
+  if (!content) return;
+  const ls = getLevelScores();
+  const ts = getTopicScores();
+  const levelOrder = ['tipu','whakatipu','pakari','matatau'];
+  const totalItems = levelOrder.length + TOPICS.length;
+  const totalStars = totalItems * 3;
+  const earned = levelOrder.reduce((s,id) => s + (ls[id]||0), 0)
+               + TOPICS.reduce((s,t) => s + (ts[t.id]||0), 0);
+  const pct = Math.round(earned / totalStars * 100);
+  const code = getResultCode();
+
+  content.innerHTML = `
+  <div class="dash-screen">
+    <div style="margin-bottom:20px">
+      <div style="font-size:22px;font-weight:800;color:var(--green-deep);margin-bottom:12px">Aronui — Your Progress</div>
+      <div class="dash-total-bar-wrap">
+        <div class="dash-total-bar-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="dash-total-label">${earned} ★ i ${totalStars} — ${pct}% oti</div>
+    </div>
+
+    <div class="dash-section-label">Ngā Taumata — Levels</div>
+    <div class="dash-levels">
+      ${levelOrder.map(id => {
+        const ld = LEVEL_DATA[id];
+        const s = ls[id] || 0;
+        const stars = '★'.repeat(s) + '☆'.repeat(3 - s);
+        return `<div class="dash-level-card${s ? ' done' : ''}">
+          <div class="dash-level-name">${ld.name}</div>
+          <div class="dash-level-eng">${ld.eng}</div>
+          <div class="dash-level-stars" style="color:${s ? 'var(--gold)' : 'var(--grey-300)'}">${stars}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="dash-section-label">Ngā Kaupapa — Topics</div>
+    <div class="dash-topics">
+      ${TOPICS.map(t => {
+        const s = ts[t.id] || 0;
+        const stars = '★'.repeat(s) + '☆'.repeat(3 - s);
+        return `<div class="dash-topic-card${s ? ' done' : ''}">
+          <div class="dash-topic-emoji">${TOPIC_EMOJIS[t.id] || '📌'}</div>
+          <div class="dash-topic-name">${t.name}</div>
+          <div class="dash-topic-stars" style="color:${s ? 'var(--gold)' : 'var(--grey-300)'}">${stars}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="result-code-box">
+      <div class="result-code-label">Tohu aronui — Result code</div>
+      <div class="result-code-value" id="result-code-text">${code}</div>
+      <div class="result-code-hint">Share this code with your kaiako to show your progress.</div>
+      <div class="dash-btn-row">
+        <button class="btn btn-hint" id="copy-code-btn" onclick="copyResultCode()">Kopi — Copy</button>
+        <button class="btn btn-secondary" onclick="resetProgress()" style="color:#b71c1c;border-color:#ef9a9a">Ūkui — Reset progress</button>
+      </div>
+    </div>
+  </div>`;
 }
 function renderTopics() {
   const content = document.getElementById('topics-content');
