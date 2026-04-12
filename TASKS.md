@@ -14,9 +14,9 @@
 - [x] Add optional timer mode for Mastery level
 
 ## Priority 3 — Learning depth
-- [ ] Add small illustration/image alongside English prompt at Emerging level
-- [ ] Add hover/tap tooltip showing English meaning of each Māori tile
-- [ ] Add vocabulary tip or "kupu hou" fact between questions
+- [x] Add small illustration/image alongside English prompt at Emerging level
+- [x] Add hover/tap tooltip showing English meaning of each Māori tile
+- [x] Add vocabulary tip or "kupu hou" fact between questions
 
 ## Priority 4 — Accessibility
 - [ ] Add text-to-speech for English sentence prompt

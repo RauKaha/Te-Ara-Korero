@@ -461,6 +461,7 @@ body {
 
 /* ── WORD TILES ─────────────────────────────────────────────── */
 .tile {
+  position: relative;
   padding: 8px 14px;
   border-radius: var(--radius-xs);
   border: 2.5px solid;
@@ -488,6 +489,74 @@ body {
 .tile.cat-mod   { background: var(--cat-mod-bg);   border-color: var(--cat-mod-border);   color: var(--cat-mod-text);   }
 .tile.cat-int   { background: var(--cat-int-bg);   border-color: var(--cat-int-border);   color: var(--cat-int-text);   }
 .tile.cat-subj  { background: var(--cat-subj-bg);  border-color: var(--cat-subj-border);  color: var(--cat-subj-text);  }
+
+/* ── TILE TOOLTIP ────────────────────────────────────────────── */
+.tile[data-tip]:not([data-tip=""]):hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--green-deep);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+}
+.tile[data-tip]:not([data-tip=""]):hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--green-deep);
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* ── TIPU ILLUSTRATION ───────────────────────────────────────── */
+.tipu-illus {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.tipu-illus-icon {
+  font-size: 46px;
+  line-height: 1;
+  width: 72px; height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+}
+
+/* ── KUPU HOU PANEL ──────────────────────────────────────────── */
+.kupu-hou-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--gold-light);
+  border: 1.5px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  margin-bottom: 14px;
+}
+.kupu-hou-icon { font-size: 20px; flex-shrink: 0; line-height: 1.2; }
+.kupu-hou-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: #7a5200; margin-bottom: 1px;
+}
+.kupu-hou-maori { font-size: 17px; font-weight: 800; color: var(--green-deep); line-height: 1.2; }
+.kupu-hou-eng   { font-size: 12px; font-weight: 500; color: var(--grey-700); }
 
 /* ── TILE POOL ──────────────────────────────────────────────── */
 .tile-pool {
@@ -1062,6 +1131,156 @@ const CAT_DOT_STYLE = {
   'cat-subj':  'background:var(--cat-subj-bg);border-color:var(--cat-subj-border)',
 };
 
+// ─── WORD MEANINGS (Māori → English, for tile tooltips & kupu hou) ────────────
+const WORD_MEANINGS = {
+  // Tense markers
+  'Kei te':'is/are (present continuous)',
+  'Ka':    'did / will (neutral tense)',
+  'I':     'was/were (past tense)',
+  'Kua':   'has/have (perfect tense)',
+  'E … ana':'is/are (ongoing)',
+  'Hei':   'at/for (future location)',
+  // Verbs
+  'kai':        'eat',
+  'inu':        'drink',
+  'oma':        'run',
+  'moe':        'sleep',
+  'haere':      'go / travel',
+  'mahi':       'work',
+  'hoki':       'return / go back',
+  'noho':       'sit / stay',
+  'tū':         'stand',
+  'pānui':      'read',
+  'tuhi':       'write',
+  'ako':        'learn',
+  'tākaro':     'play',
+  'kōrero':     'speak / talk',
+  'whakarongo': 'listen',
+  'titiro':     'look / watch',
+  'rere':       'fly',
+  'piki':       'climb',
+  'horoi':      'wash',
+  'hanga':      'build',
+  'kawe':       'carry',
+  'tunu':       'cook',
+  'rapu':       'search for',
+  'tango':      'take',
+  'whakatō':    'plant (seeds)',
+  'tiaki':      'care for / look after',
+  'hopu':       'catch',
+  'whakaako':   'teach',
+  'manaaki':    'welcome / show respect',
+  'hoko':       'buy',
+  'kite':       'see / find',
+  'tapahi':     'cut',
+  'kohi':       'collect / gather',
+  'hari':       'carry / bring',
+  'whatu':      'weave',
+  'waiata':     'sing',
+  'tito':       'compose',
+  'whakarite':  'prepare / organise',
+  'ako':        'learn',
+  'ārahi':      'lead / guide',
+  'tohu':       'point / indicate',
+  // Determiners / particles
+  'te':   'the (singular)',
+  'ngā':  'the (plural)',
+  'tāna': 'their (one thing)',
+  'tōna': 'his / her / its',
+  'tō':   'your / his / her',
+  'i':    'at / in (location) / did (past)',
+  'ki':   'to / towards',
+  'ō':    'of (possession)',
+  // Nouns — people
+  'tamaiti':   'child',
+  'kaiako':    'teacher',
+  'tamariki':  'children',
+  'pēpi':      'baby',
+  'whānau':    'family',
+  'kaimahi':   'worker',
+  'manuhiri':  'visitor / guest',
+  'koro':      'grandfather',
+  'ākonga':    'student / learner',
+  'māmā':      'mother',
+  'pāpā':      'father',
+  'kuia':      'grandmother',
+  'rangatira': 'chief / leader',
+  'tāngata':   'people / person',
+  'kaumātua':  'elder',
+  'hoa':       'friend',
+  'kaitākaro': 'player',
+  'mokopuna':  'grandchild',
+  'rātou':     'they (3 or more)',
+  // Nouns — animals
+  'kurī':  'dog',
+  'ngeru': 'cat',
+  'manu':  'bird',
+  'ika':   'fish',
+  // Nouns — things & places
+  'āporo':     'apple',
+  'pukapuka':  'book',
+  'kākahu':    'clothes',
+  'whare':     'house',
+  'pēke':      'bag',
+  'pene':      'pen',
+  'poi':       'poi (ball on string)',
+  'ingoa':     'name',
+  'kākano':    'seed',
+  'miraka':    'milk',
+  'reta':      'letter',
+  'māra':      'garden',
+  'rākau':     'tree / wood',
+  'tēpu':      'table',
+  'kura':      'school',
+  'kāinga':    'home',
+  'awa':       'river',
+  'maunga':    'mountain',
+  'moana':     'ocean / lake',
+  'ngahere':   'forest',
+  'roto':      'lake',
+  'ara':       'path / road',
+  // Adjectives
+  'nui':      'big / many',
+  'iti':      'small',
+  'pai':      'good',
+  'kino':     'bad',
+  'ātaahua':  'beautiful',
+  'katoa':    'all / every',
+  'hou':      'new',
+  'tawhito':  'old / ancient',
+  'māui':     'left',
+  'matau':    'right',
+  // Connectives
+  'ā':       'and then',
+  'me':      'and / with',
+  'engari':  'but',
+  'nō reira':'therefore / so',
+  'hoi anō': 'however',
+  'ko':      'is (identification)',
+};
+
+// ─── TIPU ILLUSTRATIONS (emoji per verb for Emerging level) ──────────────────
+const TIPU_ILLUSTRATIONS = {
+  'kai':        '🍽️',
+  'inu':        '🥤',
+  'oma':        '🏃',
+  'moe':        '😴',
+  'haere':      '🚶',
+  'mahi':       '🔨',
+  'hoki':       '↩️',
+  'noho':       '🪑',
+  'tū':         '🧍',
+  'pānui':      '📖',
+  'tuhi':       '✏️',
+  'ako':        '💡',
+  'tākaro':     '⚽',
+  'kōrero':     '💬',
+  'whakarongo': '👂',
+  'titiro':     '👀',
+  'rere':       '🦅',
+  'piki':       '🧗',
+};
+
 // Sentence format: { words:[{w,c}], translation:"", distractors:[{w,c}] }
 // c = CSS class: cat-tense / cat-verb / cat-det / cat-noun / cat-adj / cat-loc / cat-conn / cat-mod / cat-int / cat-subj
 
@@ -1549,6 +1768,7 @@ function makeTileHTML(word, idx, placed, usedSet, isPool) {
   return `<span class="tile ${word.c}${used?' used':''}${hint?' hint-highlight':''}"
     onclick="${isPool ? `poolClick(${idx})` : `placedClick(${idx})`}"
     title="${CAT_LABELS[word.c]||''}"
+    data-tip="${WORD_MEANINGS[word.w]||''}"
   >${word.w}</span>`;
 }
 function getPool(sentence) {
@@ -1565,6 +1785,30 @@ function starsFor(pct) {
   if (pct >= 80) return '★★★';
   if (pct >= 50) return '★★☆';
   return '★☆☆';
+}
+function getTipuIllustration(sentence) {
+  const verbWord = sentence.words.find(w => w.c === 'cat-verb');
+  if (!verbWord) return '';
+  const emoji = TIPU_ILLUSTRATIONS[verbWord.w];
+  if (!emoji) return '';
+  return `<div class="tipu-illus"><div class="tipu-illus-icon">${emoji}</div></div>`;
+}
+function getKupuHou(sentence) {
+  const priority = ['cat-noun','cat-verb','cat-adj','cat-subj','cat-loc'];
+  let chosen = null;
+  for (const cat of priority) {
+    const found = sentence.words.find(w => w.c === cat && WORD_MEANINGS[w.w]);
+    if (found) { chosen = found; break; }
+  }
+  if (!chosen) return '';
+  return `<div class="kupu-hou-panel">
+    <div class="kupu-hou-icon">📚</div>
+    <div>
+      <div class="kupu-hou-label">Kupu hou — New word</div>
+      <div class="kupu-hou-maori">${chosen.w}</div>
+      <div class="kupu-hou-eng">${WORD_MEANINGS[chosen.w]}</div>
+    </div>
+  </div>`;
 }
 
 // ─── TAB SWITCHING ───────────────────────────────────────────────────────────
@@ -1661,7 +1905,7 @@ function renderPractice(container, ld) {
     <div class="drop-zone${lState._practicePlaced.length>0?' has-tiles':''}" id="drop-zone">
       ${lState._practicePlaced.length===0
         ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>'
-        : lState._practicePlaced.map((w,i)=>`<span class="tile placed ${w.c}" onclick="pPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+        : lState._practicePlaced.map((w,i)=>`<span class="tile placed ${w.c}" onclick="pPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}" data-tip="${WORD_MEANINGS[w.w]||''}">${w.w}</span>`).join('')}
     </div>
     ${lState._practiceChecked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
       <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
@@ -1670,7 +1914,7 @@ function renderPractice(container, ld) {
     <div class="tile-pool" id="tile-pool">
       ${lState._practicePool.map((w,i)=>{
         const used = lState._practiceUsedSet.has(i);
-        return `<span class="tile ${w.c}${used?' used':''}" onclick="pPoolClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`;
+        return `<span class="tile ${w.c}${used?' used':''}" onclick="pPoolClick(${i})" title="${CAT_LABELS[w.c]||''}" data-tip="${WORD_MEANINGS[w.w]||''}">${w.w}</span>`;
       }).join('')}
     </div>
     <div class="btn-row">
@@ -1730,17 +1974,18 @@ function renderLevelGame(container, ld) {
     </div>` : ''}
     <div class="question-panel">
       <div class="question-label">Whakamāoritia — Translate into te reo Māori</div>
+      ${lState.level === 'tipu' ? getTipuIllustration(sentence) : ''}
       <div class="question-text">${sentence.translation}</div>
     </div>
     <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="drop-zone-label">Tō rerenga — Your sentence</div>
     <div class="drop-zone${lState.placed.length>0?' has-tiles':''}" id="drop-zone">
-      ${lState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : lState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="lPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+      ${lState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : lState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="lPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}" data-tip="${WORD_MEANINGS[w.w]||''}">${w.w}</span>`).join('')}
     </div>
     ${lState.checked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
       <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
       <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
-    </div>` : ''}
+    </div>${getKupuHou(sentence)}` : ''}
     <div class="tile-pool" id="tile-pool">
       ${lState._pool.map((w,i)=>makeTileHTML(w,i,lState.placed,lState._usedSet,true)).join('')}
     </div>
@@ -1880,17 +2125,17 @@ function renderTopicGame(container) {
     <div class="colour-key">${cats.map(c=>`<span class="key-item"><span class="key-dot" style="${CAT_DOT_STYLE[c]||''}"></span>${CAT_LABELS[c]||c}</span>`).join('')}</div>
     <div class="drop-zone-label">Tō rerenga — Your sentence</div>
     <div class="drop-zone${kState.placed.length>0?' has-tiles':''}" id="kdrop-zone">
-      ${kState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : kState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="kPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`).join('')}
+      ${kState.placed.length===0 ? '<span class="drop-zone-empty">Tāpirihia ōu kupu ki konei…</span>' : kState.placed.map((w,i)=>`<span class="tile placed ${w.c}" onclick="kPlacedClick(${i})" title="${CAT_LABELS[w.c]||''}" data-tip="${WORD_MEANINGS[w.w]||''}">${w.w}</span>`).join('')}
     </div>
     ${kState.checked ? `<div class="feedback-panel ${correct?'feedback-correct':'feedback-incorrect'}">
       <div class="feedback-title">${correct?'✓ Tino pai!':'✗ He hē.'}</div>
       <div class="feedback-sentence">${correct?correctSentence(sentence):'Correct: '+correctSentence(sentence)}</div>
-    </div>` : ''}
+    </div>${getKupuHou(sentence)}` : ''}
     <div class="tile-pool" id="ktile-pool">
       ${kState._pool.map((w,i)=>{
         const used = kState._usedSet.has(i);
         const hint = w._hint;
-        return `<span class="tile ${w.c}${used?' used':''}${hint?' hint-highlight':''}" onclick="kPoolClick(${i})" title="${CAT_LABELS[w.c]||''}">${w.w}</span>`;
+        return `<span class="tile ${w.c}${used?' used':''}${hint?' hint-highlight':''}" onclick="kPoolClick(${i})" title="${CAT_LABELS[w.c]||''}" data-tip="${WORD_MEANINGS[w.w]||''}">${w.w}</span>`;
       }).join('')}
     </div>
     <div class="btn-row">
